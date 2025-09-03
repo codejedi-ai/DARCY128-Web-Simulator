@@ -21,15 +21,13 @@ function handleFormSubmission(event) {
         return;
     }
     
-    // Simulate form submission
-    const submitBtn = form.querySelector('.submit-btn');
-    const originalText = submitBtn.innerHTML;
-    
     // Show loading state
-    submitBtn.innerHTML = '<span class="btn-text">Submitting...</span>';
+    const submitBtn = form.querySelector('.submit-button');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Submitting...';
     submitBtn.disabled = true;
     
-    // Simulate API call
+    // Simulate form submission
     setTimeout(() => {
         // Hide form and show success message
         form.style.display = 'none';
@@ -56,19 +54,54 @@ function handleFormSubmission(event) {
     }, 1500);
 }
 
-// Smooth scrolling for anchor links
-function smoothScroll(target) {
-    document.querySelector(target).scrollIntoView({
-        behavior: 'smooth'
+// Smooth scrolling for navigation links
+function setupSmoothScrolling() {
+    const navLinks = document.querySelectorAll('.main-nav a[href^="#"]');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
     });
 }
 
-// Add floating animation to feature cards
-function addFloatingAnimation() {
-    const features = document.querySelectorAll('.feature');
-    features.forEach((feature, index) => {
-        feature.style.animationDelay = `${index * 0.2}s`;
-    });
+// Add form validation feedback
+function setupFormValidation() {
+    const emailInput = document.getElementById('email');
+    const form = document.getElementById('interestForm');
+    
+    if (emailInput) {
+        emailInput.addEventListener('blur', function() {
+            const email = this.value;
+            if (email && !validateUWaterlooEmail(email)) {
+                this.style.borderColor = '#d32f2f';
+                
+                // Add error message if it doesn't exist
+                let errorMsg = this.parentNode.querySelector('.error-message');
+                if (!errorMsg) {
+                    errorMsg = document.createElement('small');
+                    errorMsg.className = 'error-message';
+                    errorMsg.style.color = '#d32f2f';
+                    errorMsg.textContent = 'Please enter a valid @uwaterloo.ca email address';
+                    this.parentNode.appendChild(errorMsg);
+                }
+            } else {
+                this.style.borderColor = '#ddd';
+                const errorMsg = this.parentNode.querySelector('.error-message');
+                if (errorMsg) {
+                    errorMsg.remove();
+                }
+            }
+        });
+    }
 }
 
 // Initialize when DOM is loaded
@@ -79,11 +112,14 @@ document.addEventListener('DOMContentLoaded', function() {
         form.addEventListener('submit', handleFormSubmission);
     }
     
-    // Add floating animations
-    addFloatingAnimation();
+    // Setup smooth scrolling
+    setupSmoothScrolling();
     
-    // Add intersection observer for timeline animations
-    const timelineItems = document.querySelectorAll('.timeline-item');
+    // Setup form validation
+    setupFormValidation();
+    
+    // Add subtle animations to content sections
+    const sections = document.querySelectorAll('.content-section, .sidebar-section');
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -93,53 +129,40 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, { threshold: 0.1 });
     
-    timelineItems.forEach(item => {
-        item.style.opacity = '0';
-        item.style.transform = 'translateY(20px)';
-        item.style.transition = 'all 0.6s ease';
-        observer.observe(item);
-    });
-    
-    // Add parallax effect to hero section
-    window.addEventListener('scroll', () => {
-        const scrolled = window.pageYOffset;
-        const hero = document.querySelector('.hero');
-        if (hero) {
-            hero.style.transform = `translateY(${scrolled * 0.5}px)`;
-        }
+    sections.forEach(section => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(20px)';
+        section.style.transition = 'all 0.6s ease';
+        observer.observe(section);
     });
 });
 
-// Add some interactive effects
+// Add accessibility improvements
 document.addEventListener('DOMContentLoaded', function() {
-    // Add hover effect to stats
-    const stats = document.querySelectorAll('.stat');
-    stats.forEach(stat => {
-        stat.addEventListener('mouseenter', function() {
-            this.style.transform = 'scale(1.1)';
-            this.style.transition = 'transform 0.3s ease';
-        });
-        
-        stat.addEventListener('mouseleave', function() {
-            this.style.transform = 'scale(1)';
+    // Add keyboard navigation for form
+    const formInputs = document.querySelectorAll('input, select, button');
+    formInputs.forEach((input, index) => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && this.tagName !== 'BUTTON') {
+                e.preventDefault();
+                const nextInput = formInputs[index + 1];
+                if (nextInput) {
+                    nextInput.focus();
+                }
+            }
         });
     });
     
-    // Add typing effect to hero title
-    const heroTitle = document.querySelector('.hero-title');
-    if (heroTitle) {
-        const originalText = heroTitle.textContent;
-        heroTitle.textContent = '';
+    // Add focus indicators for better accessibility
+    const focusableElements = document.querySelectorAll('a, button, input, select');
+    focusableElements.forEach(element => {
+        element.addEventListener('focus', function() {
+            this.style.outline = '2px solid #ffd320';
+            this.style.outlineOffset = '2px';
+        });
         
-        let i = 0;
-        const typeWriter = () => {
-            if (i < originalText.length) {
-                heroTitle.textContent += originalText.charAt(i);
-                i++;
-                setTimeout(typeWriter, 50);
-            }
-        };
-        
-        setTimeout(typeWriter, 1000);
-    }
+        element.addEventListener('blur', function() {
+            this.style.outline = 'none';
+        });
+    });
 });

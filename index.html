@@ -3,201 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warrior Life - UWaterloo Hackathon</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Warrior Life Hackathon - University of Waterloo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="src/styles.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Hero Section -->
-        <header class="hero">
-            <div class="hero-content">
-                <div class="logo-section">
-                    <h1 class="logo">⚔️ Warrior Life</h1>
-                    <p class="tagline">University of Waterloo Internal Hackathon</p>
-                </div>
-                
-                <div class="hero-text">
-                    <h2 class="hero-title">Build Solutions for Student Life at UWaterloo</h2>
-                    <p class="hero-description">
-                        Join fellow Warriors in creating innovative solutions that enhance the student experience at the University of Waterloo. From campus navigation to study groups, meal planning to mental health - let's hack for our community.
-                    </p>
-                </div>
-
-                <div class="stats">
-                    <div class="stat">
-                        <span class="stat-number">48</span>
-                        <span class="stat-label">Hours</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number">$10K</span>
-                        <span class="stat-label">Prizes</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number">200+</span>
-                        <span class="stat-label">Students</span>
-                    </div>
-                </div>
+    <!-- Header -->
+    <header class="site-header">
+        <div class="header-container">
+            <div class="university-branding">
+                <img src="https://uwaterloo.ca/brand/sites/ca.brand/files/uploads/images/uw-logo-white.png" alt="University of Waterloo" class="uw-logo">
             </div>
-        </header>
+            <nav class="main-nav">
+                <a href="#about">About</a>
+                <a href="#register">Register Interest</a>
+                <a href="#timeline">Timeline</a>
+                <a href="#contact">Contact</a>
+            </nav>
+        </div>
+    </header>
 
-        <!-- Interest Form Section -->
-        <section class="interest-form-section">
-            <div class="form-container">
-                <div class="form-header">
-                    <h3>Express Your Interest</h3>
-                    <p>Be the first to know when registration opens</p>
-                </div>
-                
-                <form class="interest-form" id="interestForm">
-                    <div class="input-group">
-                        <label for="email">UWaterloo Email</label>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            name="email" 
-                            placeholder="yourname@uwaterloo.ca"
-                            pattern=".*@uwaterloo\.ca$"
-                            required
-                        >
-                        <span class="input-hint">Must be a valid @uwaterloo.ca email address</span>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="name">Full Name</label>
-                        <input 
-                            type="text" 
-                            id="name" 
-                            name="name" 
-                            placeholder="Enter your full name"
-                            required
-                        >
-                    </div>
-
-                    <div class="input-group">
-                        <label for="program">Program/Faculty</label>
-                        <select id="program" name="program" required>
-                            <option value="">Select your program</option>
-                            <option value="computer-science">Computer Science</option>
-                            <option value="software-engineering">Software Engineering</option>
-                            <option value="computer-engineering">Computer Engineering</option>
-                            <option value="electrical-engineering">Electrical Engineering</option>
-                            <option value="mechanical-engineering">Mechanical Engineering</option>
-                            <option value="systems-design">Systems Design Engineering</option>
-                            <option value="mathematics">Mathematics</option>
-                            <option value="business">Business</option>
-                            <option value="arts">Arts</option>
-                            <option value="science">Science</option>
-                            <option value="environment">Environment</option>
-                            <option value="health">Health</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="year">Academic Year</label>
-                        <select id="year" name="year" required>
-                            <option value="">Select your year</option>
-                            <option value="1a">1A</option>
-                            <option value="1b">1B</option>
-                            <option value="2a">2A</option>
-                            <option value="2b">2B</option>
-                            <option value="3a">3A</option>
-                            <option value="3b">3B</option>
-                            <option value="4a">4A</option>
-                            <option value="4b">4B</option>
-                            <option value="graduate">Graduate Student</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" class="submit-btn">
-                        <span class="btn-text">Join the Warriors</span>
-                        <span class="btn-icon">⚔️</span>
-                    </button>
-                </form>
-
-                <div class="success-message" id="successMessage">
-                    <div class="success-icon">✅</div>
-                    <h4>Interest Registered!</h4>
-                    <p>Thanks for your interest! We'll notify you when registration opens.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Features Section -->
-        <section class="features">
-            <h3>What to Expect</h3>
-            <div class="features-grid">
-                <div class="feature">
-                    <div class="feature-icon">🏫</div>
-                    <h4>Campus-Focused Challenges</h4>
-                    <p>Tackle real problems faced by UWaterloo students daily</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">🤝</div>
-                    <h4>Team Formation</h4>
-                    <p>Connect with fellow Warriors and form diverse teams</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">🏆</div>
-                    <h4>Amazing Prizes</h4>
-                    <p>Win cash prizes, tech gear, and exclusive opportunities</p>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon">🚀</div>
-                    <h4>Mentorship</h4>
-                    <p>Get guidance from industry professionals and alumni</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Timeline Section -->
-        <section class="timeline">
-            <h3>Event Timeline</h3>
-            <div class="timeline-container">
-                <div class="timeline-item">
-                    <div class="timeline-marker"></div>
-                    <div class="timeline-content">
-                        <h4>Registration Opens</h4>
-                        <p>TBA - Be the first to know!</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-marker"></div>
-                    <div class="timeline-content">
-                        <h4>Kickoff Event</h4>
-                        <p>Opening ceremony, team formation, and challenge reveal</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-marker"></div>
-                    <div class="timeline-content">
-                        <h4>48 Hours of Hacking</h4>
-                        <p>Build, iterate, and create amazing solutions</p>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-marker"></div>
-                    <div class="timeline-content">
-                        <h4>Demo Day & Awards</h4>
-                        <p>Present your projects and celebrate achievements</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Footer -->
-        <footer class="footer">
-            <div class="footer-content">
-                <p>&copy; 2025 Warrior Life Hackathon - University of Waterloo</p>
-                <div class="footer-links">
-                    <a href="mailto:contact@warriorlife.ca">Contact</a>
-                    <a href="#">Code of Conduct</a>
-                    <a href="#">FAQ</a>
-                </div>
-            </div>
-        </footer>
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-container">
+        <div class="container">
+            <nav class="breadcrumb">
+                <a href="#">University of Waterloo</a>
+                <span class="separator">></span>
+                <a href="#">Student Life</a>
+                <span class="separator">></span>
+                <span class="current">Warrior Life Hackathon</span>
+            </nav>
+        </div>
     </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1 class="page-title">Warrior Life Hackathon</h1>
+                <p class="page-subtitle">Internal hackathon focused on enhancing student life at the University of Waterloo</p>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="content-grid">
+                <!-- Main Content Column -->
+                <div class="main-column">
+                    <section id="about" class="content-section">
+                        <h2>About the Hackathon</h2>
+                        <p>The Warrior Life Hackathon is an internal University of Waterloo event where students collaborate to create innovative solutions that enhance the student experience on campus. From improving campus navigation to developing study group platforms, meal planning tools, and mental health resources - this hackathon focuses on building for our community, by our community.</p>
+                        
+                        <div class="highlight-box">
+                            <h3>Event Highlights</h3>
+                            <ul>
+                                <li><strong>48-hour intensive hackathon</strong> - Build, iterate, and create</li>
+                                <li><strong>$10,000 in prizes</strong> - Cash awards and tech gear</li>
+                                <li><strong>200+ student participants</strong> - Connect with fellow Warriors</li>
+                                <li><strong>Industry mentorship</strong> - Guidance from professionals and alumni</li>
+                                <li><strong>Campus-focused challenges</strong> - Solve real UWaterloo problems</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section id="timeline" class="content-section">
+                        <h2>Important Dates</h2>
+                        <div class="dates-table">
+                            <div class="date-row">
+                                <div class="date-cell">
+                                    <strong>Registration Opens</strong>
+                                </div>
+                                <div class="date-cell">
+                                    To be announced
+                                </div>
+                            </div>
+                            <div class="date-row">
+                                <div class="date-cell">
+                                    <strong>Team Formation & Kickoff</strong>
+                                </div>
+                                <div class="date-cell">
+                                    TBA - Opening ceremony and challenge reveal
+                                </div>
+                            </div>
+                            <div class="date-row">
+                                <div class="date-cell">
+                                    <strong>Hacking Period</strong>
+                                </div>
+                                <div class="date-cell">
+                                    48 hours of development and innovation
+                                </div>
+                            </div>
+                            <div class="date-row">
+                                <div class="date-cell">
+                                    <strong>Demo Day & Awards</strong>
+                                </div>
+                                <div class="date-cell">
+                                    Project presentations and prize ceremony
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="content-section">
+                        <h2>Challenge Areas</h2>
+                        <div class="challenge-grid">
+                            <div class="challenge-card">
+                                <h4>Campus Navigation</h4>
+                                <p>Help students navigate the complex UWaterloo campus more efficiently</p>
+                            </div>
+                            <div class="challenge-card">
+                                <h4>Study Groups</h4>
+                                <p>Connect students for collaborative learning and study sessions</p>
+                            </div>
+                            <div class="challenge-card">
+                                <h4>Mental Health</h4>
+                                <p>Support student wellbeing with innovative mental health tools</p>
+                            </div>
+                            <div class="challenge-card">
+                                <h4>Campus Services</h4>
+                                <p>Improve access to dining, housing, and other campus services</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                    <div class="sidebar-section" id="register">
+                        <h3>Express Your Interest</h3>
+                        <p class="sidebar-text">Be the first to know when registration opens for the Warrior Life Hackathon.</p>
+                        
+                        <form class="interest-form" id="interestForm">
+                            <div class="form-group">
+                                <label for="email">UWaterloo Email Address <span class="required">*</span></label>
+                                <input 
+                                    type="email" 
+                                    id="email" 
+                                    name="email" 
+                                    placeholder="yourname@uwaterloo.ca"
+                                    pattern=".*@uwaterloo\.ca$"
+                                    required
+                                >
+                                <small class="form-help">Must be a valid @uwaterloo.ca email address</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="name">Full Name <span class="required">*</span></label>
+                                <input 
+                                    type="text" 
+                                    id="name" 
+                                    name="name" 
+                                    placeholder="Enter your full name"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="program">Program/Faculty <span class="required">*</span></label>
+                                <select id="program" name="program" required>
+                                    <option value="">Select your program</option>
+                                    <option value="computer-science">Computer Science</option>
+                                    <option value="software-engineering">Software Engineering</option>
+                                    <option value="computer-engineering">Computer Engineering</option>
+                                    <option value="electrical-engineering">Electrical Engineering</option>
+                                    <option value="mechanical-engineering">Mechanical Engineering</option>
+                                    <option value="systems-design">Systems Design Engineering</option>
+                                    <option value="mathematics">Mathematics</option>
+                                    <option value="business">Business</option>
+                                    <option value="arts">Arts</option>
+                                    <option value="science">Science</option>
+                                    <option value="environment">Environment</option>
+                                    <option value="health">Health</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="year">Academic Year <span class="required">*</span></label>
+                                <select id="year" name="year" required>
+                                    <option value="">Select your year</option>
+                                    <option value="1a">1A</option>
+                                    <option value="1b">1B</option>
+                                    <option value="2a">2A</option>
+                                    <option value="2b">2B</option>
+                                    <option value="3a">3A</option>
+                                    <option value="3b">3B</option>
+                                    <option value="4a">4A</option>
+                                    <option value="4b">4B</option>
+                                    <option value="graduate">Graduate Student</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="submit-button">
+                                Register Interest
+                            </button>
+                        </form>
+
+                        <div class="success-message" id="successMessage">
+                            <div class="success-content">
+                                <h4>Interest Registered Successfully</h4>
+                                <p>Thank you for your interest! We'll notify you when registration opens.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h3>Quick Facts</h3>
+                        <div class="fact-list">
+                            <div class="fact-item">
+                                <strong>Duration:</strong> 48 hours
+                            </div>
+                            <div class="fact-item">
+                                <strong>Prize Pool:</strong> $10,000
+                            </div>
+                            <div class="fact-item">
+                                <strong>Expected Participants:</strong> 200+ students
+                            </div>
+                            <div class="fact-item">
+                                <strong>Focus:</strong> UWaterloo student life
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h3>Contact Information</h3>
+                        <div class="contact-info">
+                            <p><strong>Email:</strong> <a href="mailto:hackathon@uwaterloo.ca">hackathon@uwaterloo.ca</a></p>
+                            <p><strong>Location:</strong> University of Waterloo Campus</p>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>University of Waterloo</h4>
+                    <p>200 University Avenue West<br>
+                    Waterloo, Ontario, Canada N2L 3G1</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p>Phone: 519-888-4567<br>
+                    Email: <a href="mailto:hackathon@uwaterloo.ca">hackathon@uwaterloo.ca</a></p>
+                </div>
+                <div class="footer-section">
+                    <h4>Connect</h4>
+                    <div class="social-links">
+                        <a href="#">Facebook</a>
+                        <a href="#">Twitter</a>
+                        <a href="#">Instagram</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 University of Waterloo. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 
     <script src="src/main.js"></script>
 </body>
