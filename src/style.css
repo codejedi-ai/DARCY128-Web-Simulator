@@ -158,6 +158,10 @@ body {
 	min-height: 100vh;
 }
 
+/* Import page-specific styles */
+@import './pages/Home/style.css';
+@import './pages/WarriorLife/style.css';
+
 /* Responsive Design */
 @media (max-width: 1024px) {
 	.header-container {
