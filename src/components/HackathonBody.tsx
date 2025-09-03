@@ -2,11 +2,12 @@ export function HackathonBody() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-black via-gray-900 to-black text-white">
+      <section className="relative bg-gradient-to-br from-black via-gray-900 to-black text-white overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop')] bg-cover bg-center opacity-20"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
         <div className="relative mx-12 lg:mx-24 py-20 lg:py-32">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-block bg-gradient-to-r from-waterloo-gold to-waterloo-yellow text-black px-6 py-2 rounded-full text-sm font-semibold tracking-wide mb-8 shadow-lg">
+            <div className="inline-block bg-gradient-to-r from-waterloo-gold to-waterloo-yellow text-black px-6 py-3 rounded-full text-sm font-bold tracking-wide mb-8 shadow-xl animate-pulse">
               HACKATHON 2025
             </div>
             <h1 className="text-5xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-white to-waterloo-gold bg-clip-text text-transparent">
@@ -33,11 +34,11 @@ export function HackathonBody() {
             </div>
             
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-gradient-to-r from-waterloo-gold to-waterloo-yellow text-black px-8 py-4 rounded-lg text-lg font-semibold hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+              <button className="bg-gradient-to-r from-waterloo-gold to-waterloo-yellow text-black px-10 py-4 rounded-xl text-lg font-bold hover:shadow-2xl hover:-translate-y-2 hover:scale-105 transition-all duration-300 shadow-lg">
                 Register Now
               </button>
-              <button className="border-2 border-white/30 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:border-waterloo-gold hover:bg-waterloo-gold/10 transition-all duration-300 backdrop-blur-sm">
+              <button className="border-2 border-white/40 text-white px-10 py-4 rounded-xl text-lg font-bold hover:border-waterloo-gold hover:bg-waterloo-gold/20 hover:-translate-y-1 transition-all duration-300 backdrop-blur-sm">
                 Learn More
               </button>
             </div>

@@ -1,10 +1,4 @@
 export function Navbar() {
-  const navItems = [
-    { label: 'test1' },
-    { label: 'test2' },
-    { label: 'test3' },
-  ];
-
   return (
     <header className="bg-black text-white sticky top-0 z-50 shadow-lg">
       <div className="mx-8 lg:mx-16">
@@ -24,15 +18,15 @@ export function Navbar() {
           
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-8 flex-1 justify-center">
-            {navItems.map((item) => (
-              <a 
-                key={item.label}
-                href="#" 
-                className="text-white text-sm font-normal py-2 transition-colors duration-200 hover:text-waterloo-gold whitespace-nowrap"
-              >
-                {item.label}
-              </a>
-            ))}
+            <a href="#" className="text-white text-sm font-medium py-2 px-4 rounded-md transition-all duration-200 hover:text-waterloo-gold hover:bg-white/10 whitespace-nowrap">
+              About
+            </a>
+            <a href="#" className="text-white text-sm font-medium py-2 px-4 rounded-md transition-all duration-200 hover:text-waterloo-gold hover:bg-white/10 whitespace-nowrap">
+              Challenges
+            </a>
+            <a href="#" className="text-white text-sm font-medium py-2 px-4 rounded-md transition-all duration-200 hover:text-waterloo-gold hover:bg-white/10 whitespace-nowrap">
+              Schedule
+            </a>
           </nav>
 
           {/* Search Section */}
@@ -64,16 +58,16 @@ export function Navbar() {
 
       {/* Mobile Navigation */}
       <div className="md:hidden px-8 pb-4 border-t border-gray-700">
-        <nav className="flex gap-4 pt-4 overflow-x-auto">
-          {navItems.map((item) => (
-            <a 
-              key={item.label}
-              href="#" 
-              className="text-white text-sm font-normal py-2 transition-colors duration-200 hover:text-waterloo-gold whitespace-nowrap"
-            >
-              {item.label}
-            </a>
-          ))}
+        <nav className="flex gap-2 pt-4 overflow-x-auto">
+          <a href="#" className="text-white text-sm font-medium py-2 px-4 rounded-md transition-all duration-200 hover:text-waterloo-gold hover:bg-white/10 whitespace-nowrap">
+            About
+          </a>
+          <a href="#" className="text-white text-sm font-medium py-2 px-4 rounded-md transition-all duration-200 hover:text-waterloo-gold hover:bg-white/10 whitespace-nowrap">
+            Challenges
+          </a>
+          <a href="#" className="text-white text-sm font-medium py-2 px-4 rounded-md transition-all duration-200 hover:text-waterloo-gold hover:bg-white/10 whitespace-nowrap">
+            Schedule
+          </a>
         </nav>
       </div>
     </header>
