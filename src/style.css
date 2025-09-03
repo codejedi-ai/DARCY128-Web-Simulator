@@ -37,7 +37,7 @@ body {
 /* UW Color Bars */
 .uw-colour-bar__cbars {
 	display: flex;
-	height: 4px;
+	height: 8px;
 	width: 100%;
 }
 
@@ -47,19 +47,19 @@ body {
 }
 
 .org-default-1 {
-	background-color: #ffd100;
+	background-color: #ffd320;
 }
 
 .org-default-2 {
-	background-color: #ffb81c;
+	background-color: #ffb900;
 }
 
 .org-default-3 {
-	background-color: #ff6900;
+	background-color: #ff8f00;
 }
 
 .org-default-4 {
-	background-color: #d50000;
+	background-color: #ff6900;
 }
 
 .header-container {
