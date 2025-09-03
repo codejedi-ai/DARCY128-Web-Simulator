@@ -2,7 +2,7 @@ import { Navigation } from '../../components/Navigation';
 
 export function Home() {
 	return (
-		<div className="home-page">
+		<div className="home-page main-content">
 			<Navigation />
 			
 			{/* Hero Section */}
@@ -35,7 +35,7 @@ export function Home() {
 						<button className="cta-primary">Register Now</button>
 						<button className="cta-secondary">Learn More</button>
 			{/* Challenge Areas */}
-			<section className="challenge-areas">
+			<section className="challenge-areas page-section">
 				<div className="container">
 					<h2 className="section-title">Challenge Areas</h2>
 					<p className="section-subtitle">
@@ -87,7 +87,7 @@ export function Home() {
 			</section>
 					</div>
 			{/* Timeline */}
-			<section className="timeline-section">
+			<section className="timeline-section page-section">
 				<div className="container">
 					<h2 className="section-title">Event Timeline</h2>
 					<div className="timeline">
@@ -131,7 +131,7 @@ export function Home() {
 			</section>
 				</div>
 			{/* Prizes */}
-			<section className="prizes-section">
+			<section className="prizes-section page-section">
 				<div className="container">
 					<h2 className="section-title">Prizes & Recognition</h2>
 					<div className="prizes-grid">
@@ -170,7 +170,7 @@ export function Home() {
 			</section>
 			</section>
 			{/* Registration CTA */}
-			<section className="registration-cta">
+			<section className="registration-cta page-section">
 				<div className="container">
 					<div className="cta-content">
 						<h2>Ready to Make a Difference?</h2>
