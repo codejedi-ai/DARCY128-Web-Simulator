@@ -54,11 +54,11 @@ export function Navigation() {
 					</div>
 				</div>
 			</div>
-			<div className="uw-colour-bar__cbars">
-				<div className="uw-colour-bar__cbar org-default-1"></div>
-				<div className="uw-colour-bar__cbar org-default-2"></div>
-				<div className="uw-colour-bar__cbar org-default-3"></div>
-				<div className="uw-colour-bar__cbar org-default-4"></div>
+			<div>
+				<div style="height: 7px; width: 25%; float: left; background-color: rgb(255, 254, 174);"></div>
+				<div style="height: 7px; width: 25%; float: left; background-color: rgb(254, 232, 79);"></div>
+				<div style="height: 7px; width: 25%; float: left; background-color: rgb(254, 212, 91);"></div>
+				<div style="height: 7px; width: 25%; float: left; background-color: rgb(227, 179, 58);"></div>
 			</div>
 		</header>
 	);

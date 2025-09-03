@@ -34,34 +34,6 @@ body {
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* UW Color Bars */
-.uw-colour-bar__cbars {
-	display: flex;
-	height: 8px;
-	width: 100%;
-}
-
-.uw-colour-bar__cbar {
-	flex: 1;
-	height: 100%;
-}
-
-.org-default-1 {
-	background-color: #ffd320;
-}
-
-.org-default-2 {
-	background-color: #ffb900;
-}
-
-.org-default-3 {
-	background-color: #ff8f00;
-}
-
-.org-default-4 {
-	background-color: #ff6900;
-}
-
 .header-container {
 	display: flex;
 	align-items: center;
