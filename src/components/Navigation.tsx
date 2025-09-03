@@ -9,6 +9,7 @@ export function Navigation() {
 		{ label: 'Faculties & Academics', href: '/academics' },
 		{ label: 'Offices & Services', href: '/services' },
 		{ label: 'Support Waterloo', href: '/support' },
+		{ label: 'Warrior Life Hackathon', href: '/warrior-life' },
 	];
 
 	return (

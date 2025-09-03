@@ -7,6 +7,7 @@ import { About } from './pages/About.jsx';
 import { Academics } from './pages/Academics.jsx';
 import { Services } from './pages/Services.jsx';
 import { Support } from './pages/Support.jsx';
+import { WarriorLife } from './pages/WarriorLife.jsx';
 import './style.css';
 
 export function App() {
@@ -19,6 +20,7 @@ export function App() {
 				<Route path="/academics" component={Academics} />
 				<Route path="/services" component={Services} />
 				<Route path="/support" component={Support} />
+				<Route path="/warrior-life" component={WarriorLife} />
 				<Route default component={NotFound} />
 			</Router>
 		</LocationProvider>
