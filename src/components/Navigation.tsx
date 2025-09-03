@@ -13,6 +13,12 @@ export function Navigation() {
 
 	return (
 		<header className="waterloo-header">
+			<div className="uw-colour-bar__cbars">
+				<div className="uw-colour-bar__cbar org-default-1"></div>
+				<div className="uw-colour-bar__cbar org-default-2"></div>
+				<div className="uw-colour-bar__cbar org-default-3"></div>
+				<div className="uw-colour-bar__cbar org-default-4"></div>
+			</div>
 			<div className="header-container">
 				<div className="logo-section">
 					<img 
