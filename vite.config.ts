@@ -8,7 +8,7 @@ export default defineConfig({
 			prerender: {
 				enabled: true,
 				renderTarget: '#app',
-				additionalPrerenderRoutes: ['/404'],
+				additionalPrerenderRoutes: ['/admissions', '/about', '/academics', '/services', '/support', '/404'],
 				previewMiddlewareEnabled: true,
 				previewMiddlewareFallback: '/404',
 			},
