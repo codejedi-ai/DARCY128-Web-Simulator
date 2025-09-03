@@ -14,6 +14,7 @@ function handleFormSubmission(event) {
     const name = formData.get('name');
     const program = formData.get('program');
     const year = formData.get('year');
+    const experience = formData.get('experience');
     
     // Validate UWaterloo email
     if (!validateUWaterlooEmail(email)) {
@@ -39,6 +40,7 @@ function handleFormSubmission(event) {
             name,
             program,
             year,
+            experience,
             timestamp: new Date().toISOString()
         };
         
@@ -56,7 +58,7 @@ function handleFormSubmission(event) {
 
 // Smooth scrolling for navigation links
 function setupSmoothScrolling() {
-    const navLinks = document.querySelectorAll('.main-nav a[href^="#"]');
+    const navLinks = document.querySelectorAll('.nav-item[href^="#"]');
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
@@ -76,7 +78,6 @@ function setupSmoothScrolling() {
 // Add form validation feedback
 function setupFormValidation() {
     const emailInput = document.getElementById('email');
-    const form = document.getElementById('interestForm');
     
     if (emailInput) {
         emailInput.addEventListener('blur', function() {
@@ -94,7 +95,7 @@ function setupFormValidation() {
                     this.parentNode.appendChild(errorMsg);
                 }
             } else {
-                this.style.borderColor = '#ddd';
+                this.style.borderColor = '#ccc';
                 const errorMsg = this.parentNode.querySelector('.error-message');
                 if (errorMsg) {
                     errorMsg.remove();
@@ -118,28 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup form validation
     setupFormValidation();
     
-    // Add subtle animations to content sections
-    const sections = document.querySelectorAll('.content-section, .sidebar-section');
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-            }
-        });
-    }, { threshold: 0.1 });
-    
-    sections.forEach(section => {
-        section.style.opacity = '0';
-        section.style.transform = 'translateY(20px)';
-        section.style.transition = 'all 0.6s ease';
-        observer.observe(section);
-    });
-});
-
-// Add accessibility improvements
-document.addEventListener('DOMContentLoaded', function() {
-    // Add keyboard navigation for form
+    // Add keyboard navigation for accessibility
     const formInputs = document.querySelectorAll('input, select, button');
     formInputs.forEach((input, index) => {
         input.addEventListener('keydown', function(e) {
@@ -150,19 +130,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     nextInput.focus();
                 }
             }
-        });
-    });
-    
-    // Add focus indicators for better accessibility
-    const focusableElements = document.querySelectorAll('a, button, input, select');
-    focusableElements.forEach(element => {
-        element.addEventListener('focus', function() {
-            this.style.outline = '2px solid #ffd320';
-            this.style.outlineOffset = '2px';
-        });
-        
-        element.addEventListener('blur', function() {
-            this.style.outline = 'none';
         });
     });
 });
