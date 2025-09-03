@@ -1,23 +1,204 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bouncing Ball</title>
-    <style>
-        canvas {
-            display: block;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warrior Life - UWaterloo Hackathon</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/styles.css">
 </head>
 <body>
-    <script type="module" src="/src/main.ts"></script>
+    <div class="container">
+        <!-- Hero Section -->
+        <header class="hero">
+            <div class="hero-content">
+                <div class="logo-section">
+                    <h1 class="logo">⚔️ Warrior Life</h1>
+                    <p class="tagline">University of Waterloo Internal Hackathon</p>
+                </div>
+                
+                <div class="hero-text">
+                    <h2 class="hero-title">Build Solutions for Student Life at UWaterloo</h2>
+                    <p class="hero-description">
+                        Join fellow Warriors in creating innovative solutions that enhance the student experience at the University of Waterloo. From campus navigation to study groups, meal planning to mental health - let's hack for our community.
+                    </p>
+                </div>
+
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-number">48</span>
+                        <span class="stat-label">Hours</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">$10K</span>
+                        <span class="stat-label">Prizes</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">200+</span>
+                        <span class="stat-label">Students</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Interest Form Section -->
+        <section class="interest-form-section">
+            <div class="form-container">
+                <div class="form-header">
+                    <h3>Express Your Interest</h3>
+                    <p>Be the first to know when registration opens</p>
+                </div>
+                
+                <form class="interest-form" id="interestForm">
+                    <div class="input-group">
+                        <label for="email">UWaterloo Email</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            placeholder="yourname@uwaterloo.ca"
+                            pattern=".*@uwaterloo\.ca$"
+                            required
+                        >
+                        <span class="input-hint">Must be a valid @uwaterloo.ca email address</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="name">Full Name</label>
+                        <input 
+                            type="text" 
+                            id="name" 
+                            name="name" 
+                            placeholder="Enter your full name"
+                            required
+                        >
+                    </div>
+
+                    <div class="input-group">
+                        <label for="program">Program/Faculty</label>
+                        <select id="program" name="program" required>
+                            <option value="">Select your program</option>
+                            <option value="computer-science">Computer Science</option>
+                            <option value="software-engineering">Software Engineering</option>
+                            <option value="computer-engineering">Computer Engineering</option>
+                            <option value="electrical-engineering">Electrical Engineering</option>
+                            <option value="mechanical-engineering">Mechanical Engineering</option>
+                            <option value="systems-design">Systems Design Engineering</option>
+                            <option value="mathematics">Mathematics</option>
+                            <option value="business">Business</option>
+                            <option value="arts">Arts</option>
+                            <option value="science">Science</option>
+                            <option value="environment">Environment</option>
+                            <option value="health">Health</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="year">Academic Year</label>
+                        <select id="year" name="year" required>
+                            <option value="">Select your year</option>
+                            <option value="1a">1A</option>
+                            <option value="1b">1B</option>
+                            <option value="2a">2A</option>
+                            <option value="2b">2B</option>
+                            <option value="3a">3A</option>
+                            <option value="3b">3B</option>
+                            <option value="4a">4A</option>
+                            <option value="4b">4B</option>
+                            <option value="graduate">Graduate Student</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        <span class="btn-text">Join the Warriors</span>
+                        <span class="btn-icon">⚔️</span>
+                    </button>
+                </form>
+
+                <div class="success-message" id="successMessage">
+                    <div class="success-icon">✅</div>
+                    <h4>Interest Registered!</h4>
+                    <p>Thanks for your interest! We'll notify you when registration opens.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features">
+            <h3>What to Expect</h3>
+            <div class="features-grid">
+                <div class="feature">
+                    <div class="feature-icon">🏫</div>
+                    <h4>Campus-Focused Challenges</h4>
+                    <p>Tackle real problems faced by UWaterloo students daily</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🤝</div>
+                    <h4>Team Formation</h4>
+                    <p>Connect with fellow Warriors and form diverse teams</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🏆</div>
+                    <h4>Amazing Prizes</h4>
+                    <p>Win cash prizes, tech gear, and exclusive opportunities</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🚀</div>
+                    <h4>Mentorship</h4>
+                    <p>Get guidance from industry professionals and alumni</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Timeline Section -->
+        <section class="timeline">
+            <h3>Event Timeline</h3>
+            <div class="timeline-container">
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h4>Registration Opens</h4>
+                        <p>TBA - Be the first to know!</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h4>Kickoff Event</h4>
+                        <p>Opening ceremony, team formation, and challenge reveal</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h4>48 Hours of Hacking</h4>
+                        <p>Build, iterate, and create amazing solutions</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h4>Demo Day & Awards</h4>
+                        <p>Present your projects and celebrate achievements</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>&copy; 2025 Warrior Life Hackathon - University of Waterloo</p>
+                <div class="footer-links">
+                    <a href="mailto:contact@warriorlife.ca">Contact</a>
+                    <a href="#">Code of Conduct</a>
+                    <a href="#">FAQ</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="src/main.js"></script>
 </body>
 </html>
