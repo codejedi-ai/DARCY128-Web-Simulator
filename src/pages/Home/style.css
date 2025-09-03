@@ -4,25 +4,31 @@
 	background-color: #ffffff;
 }
 
+/* Container with margins */
+.container {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 3rem;
+}
+
 /* Hero Section */
 .warrior-hero {
 	background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.4) 100%), 
 	            url('https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop');
 	background-size: cover;
 	background-position: center;
-	min-height: 70vh;
+	min-height: 80vh;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	text-align: center;
 	color: white;
-	padding: 4rem 0;
+	padding: 4rem 3rem;
 }
 
 .warrior-hero-content {
-	max-width: 900px;
+	max-width: 800px;
 	margin: 0 auto;
-	padding: 0 2rem;
 }
 
 .warrior-badge {
@@ -148,16 +154,8 @@
 
 /* Challenge Areas */
 .challenge-areas {
-	padding: 4rem 0;
-	background-color: #f7f7f7;
-}
-
-.challenge-areas .container {
-	background-color: #ffffff;
-	padding: 3rem 4rem;
-	border-radius: 0;
-	box-shadow: none;
-	border: 1px solid #e5e5e5;
+	padding: 6rem 3rem;
+	background-color: #f8f9fa;
 }
 
 .challenges-grid {
@@ -169,17 +167,15 @@
 .challenge-card {
 	background: white;
 	padding: 2rem;
-	border-radius: 4px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+	border-radius: 12px;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 	transition: all 0.3s ease;
-	border: 1px solid #e5e5e5;
-	border-left: 4px solid #ffd700;
+	border-top: 4px solid #ffd700;
 }
 
 .challenge-card:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-	border-left-color: #000;
+	transform: translateY(-5px);
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
 .challenge-icon {
@@ -192,14 +188,13 @@
 	font-size: 1.5rem;
 	font-weight: 600;
 	margin-bottom: 1rem;
-	color: #000;
+	color: #333;
 }
 
 .challenge-card p {
-	color: #555;
+	color: #666;
 	margin-bottom: 1.5rem;
 	line-height: 1.6;
-	font-size: 0.95rem;
 }
 
 .challenge-examples {
@@ -210,10 +205,9 @@
 
 .challenge-examples li {
 	padding: 0.5rem 0;
-	color: #666;
+	color: #555;
 	position: relative;
 	padding-left: 1.5rem;
-	font-size: 0.9rem;
 }
 
 .challenge-examples li::before {
@@ -226,12 +220,8 @@
 
 /* Timeline */
 .timeline-section {
-	padding: 4rem 0;
+	padding: 6rem 3rem;
 	background: white;
-}
-
-.timeline-section .container {
-	padding: 3rem 4rem;
 }
 
 .timeline {
@@ -277,42 +267,33 @@
 	flex: 1;
 	background: white;
 	padding: 1.5rem;
-	border-radius: 4px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	border-radius: 8px;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 	margin: 0 2rem;
-	border: 1px solid #e5e5e5;
 	border-left: 4px solid #ffd700;
 }
 
 .timeline-content h4 {
 	margin: 0 0 0.5rem 0;
-	color: #000;
+	color: #333;
 	font-size: 1.2rem;
-	font-weight: 600;
 }
 
 .timeline-content p {
 	margin: 0;
-	color: #555;
+	color: #666;
 	line-height: 1.5;
-	font-size: 0.95rem;
 }
 
 /* Prizes */
 .prizes-section {
-	padding: 4rem 0;
-	background-color: #f7f7f7;
-	color: #333;
-}
-
-.prizes-section .container {
-	background-color: #ffffff;
-	padding: 3rem 4rem;
-	border: 1px solid #e5e5e5;
+	padding: 6rem 3rem;
+	background: linear-gradient(135deg, #000 0%, #333 100%);
+	color: white;
 }
 
 .prizes-section .section-title {
-	color: #000;
+	color: white;
 }
 
 .prizes-grid {
@@ -324,20 +305,19 @@
 }
 
 .prize-card {
-	background: white;
+	background: rgba(255, 255, 255, 0.05);
 	padding: 2.5rem 2rem;
-	border-radius: 4px;
+	border-radius: 12px;
 	text-align: center;
-	border: 1px solid #e5e5e5;
-	border-top: 4px solid #ffd700;
+	border: 2px solid rgba(255, 215, 0, 0.3);
+	backdrop-filter: blur(10px);
 	transition: all 0.3s ease;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .prize-card:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-	border-top-color: #000;
+	transform: translateY(-5px);
+	border-color: #ffd700;
+	background: rgba(255, 215, 0, 0.1);
 }
 
 .prize-rank {
@@ -354,14 +334,13 @@
 	font-size: 2.5rem;
 	font-weight: 700;
 	margin: 1rem 0;
-	color: #000;
+	color: #ffd700;
 }
 
 .prize-card p {
 	font-size: 1.2rem;
 	margin-bottom: 1.5rem;
-	color: #555;
-	font-weight: 500;
+	color: rgba(255, 255, 255, 0.9);
 }
 
 .prize-card ul {
@@ -372,9 +351,8 @@
 
 .prize-card li {
 	padding: 0.5rem 0;
-	color: #666;
-	border-bottom: 1px solid #f0f0f0;
-	font-size: 0.9rem;
+	color: rgba(255, 255, 255, 0.8);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .prize-card li:last-child {
@@ -383,13 +361,9 @@
 
 /* Registration CTA */
 .registration-cta {
-	padding: 4rem 0;
+	padding: 6rem 3rem;
 	background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
 	text-align: center;
-}
-
-.registration-cta .container {
-	padding: 3rem 4rem;
 }
 
 .cta-content h2 {
@@ -410,50 +384,23 @@
 	color: white;
 	border: none;
 	padding: 1.2rem 3rem;
-	border-radius: 4px;
+	border-radius: 8px;
 	font-size: 1.2rem;
-	font-weight: 600;
-	cursor: pointer;
-	transition: all 0.3s ease;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.cta-register:hover {
-	background: #333;
-	transform: translateY(-2px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
 .cta-note {
 	font-size: 0.9rem;
 	color: #555;
-	margin-top: 1rem;
+	margin-bottom: 1rem;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
 	.container {
-		padding: 0 1.5rem;
-	}
-	
-	.main-content {
-		padding: 0 1rem;
-	}
-	
-	.challenge-areas .container,
-	.timeline-section .container,
-	.prizes-section .container,
-	.registration-cta .container {
-		padding: 2rem 1.5rem;
+		padding: 0 2rem;
 	}
 	
 	.warrior-hero {
-		padding: 3rem 0;
+		padding: 3rem 2rem;
 		min-height: 70vh;
-	}
-	
-	.warrior-hero-content {
-		padding: 0 1.5rem;
 	}
 	
 	.warrior-title {
@@ -529,24 +476,9 @@
 		padding: 0 1rem;
 	}
 	
-	.main-content {
-		padding: 0 0.5rem;
-	}
-	
-	.challenge-areas .container,
-	.timeline-section .container,
-	.prizes-section .container,
-	.registration-cta .container {
-		padding: 2rem 1rem;
-	}
-	
 	.warrior-hero {
-		padding: 2rem 0;
+		padding: 2rem 1rem;
 		min-height: 60vh;
-	}
-	
-	.warrior-hero-content {
-		padding: 0 1rem;
 	}
 	
 	.warrior-title {
@@ -556,5 +488,12 @@
 	.warrior-stats {
 		flex-direction: column;
 		gap: 1.5rem;
+	}
+	
+	.challenge-areas,
+	.timeline-section,
+	.prizes-section,
+	.registration-cta {
+		padding: 3rem 1rem;
 	}
 }
