@@ -1,15 +1,10 @@
 import { useLocation } from 'preact-iso';
 
 export function Navigation() {
-	const { url } = useLocation();
-
 	const navItems = [
-		{ label: 'Admissions', href: '/admissions' },
-		{ label: 'About Waterloo', href: '/about' },
-		{ label: 'Faculties & Academics', href: '/academics' },
-		{ label: 'Offices & Services', href: '/services' },
-		{ label: 'Support Waterloo', href: '/support' },
-		{ label: 'Warrior Life Hackathon', href: '/warrior-life' },
+		{ label: 'test1' },
+		{ label: 'test2' },
+		{ label: 'test3' },
 	];
 
 	return (
@@ -30,9 +25,9 @@ export function Navigation() {
 				<nav className="main-nav">
 					{navItems.map((item) => (
 						<a 
-							key={item.href}
-							href={item.href} 
-							className={`nav-link ${url === item.href ? 'active' : ''}`}
+							key={item.label}
+							href="#" 
+							className="nav-link"
 						>
 							{item.label}
 						</a>
