@@ -1,38 +1,15 @@
-# Three Bodies Gravitational Simulation
+# `create-preact`
 
-A physics simulation that demonstrates the gravitational interactions between three bodies in 2D space, implemented using TypeScript and HTML5 Canvas.
+<h2 align="center">
+  <img height="256" width="256" src="./src/assets/preact.svg">
+</h2>
 
-## Features
-
-- Real-time simulation of gravitational forces between three bodies
-- Visual trails showing the path of each body
-- Color-coded bodies with customizable properties
-- Collision detection between bodies
-- Smooth animation using requestAnimationFrame
-
-## Physics Implementation
-
-The simulation uses:
-- Newton's law of universal gravitation
-- Numerical integration with time steps
-- Elastic collisions between bodies
-- Vector-based force calculations
+<h3 align="center">Get started using Preact and Vite!</h3>
 
 ## Getting Started
 
-1. Install dependencies:
-```bash
-npm install
+-   `npm run dev` - Starts a dev server at http://localhost:5173/
 
-npm run dev
-```
-http://localhost:3000
+-   `npm run build` - Builds for production, emitting to `dist/`. Prerenders all found routes in app to static HTML
 
-Controls
-	- The simulation starts automatically when the page loads
-	- Each body is represented by a colored circle
-	- Trailing paths show the movement history of each body
-Technical Details
- - Written in TypeScript
- - Rendered using HTML5 Canvas
-- Uses Vite for development and building
+-   `npm run preview` - Starts a server at http://localhost:4173/ to test production build locally

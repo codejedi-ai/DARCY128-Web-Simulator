@@ -1,23 +1,24 @@
 {
-  "name": "three-body-simulator",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
-  },
-  "devDependencies": {
-    "typescript": "~5.6.2",
-    "vite": "^6.0.5"
-  },
-  "dependencies": {
-    "simplekit": "^1.0.1"
-  },
-  "main": "ball.js",
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": ""
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview"
+	},
+	"dependencies": {
+		"preact": "^10.26.9",
+		"preact-iso": "^2.10.0",
+		"preact-render-to-string": "^6.6.1"
+	},
+	"devDependencies": {
+		"@preact/preset-vite": "^2.10.2",
+		"eslint": "^9.34.0",
+		"eslint-config-preact": "^2.0.0",
+		"typescript": "^5.9.2",
+		"vite": "^7.0.4"
+	},
+	"eslintConfig": {
+		"extends": "preact"
+	}
 }
