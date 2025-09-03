@@ -1,242 +1,44 @@
-:root {
-	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-	line-height: 1.5;
-	font-weight: 400;
-	color: #333;
-	background-color: #ffffff;
-	font-synthesis: none;
-	text-rendering: optimizeLegibility;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-	-webkit-text-size-adjust: 100%;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+  }
 }
 
-* {
-	box-sizing: border-box;
-}
-
-body {
-	margin: 0;
-	padding: 0;
-}
-
-#app {
-	min-height: 100vh;
-}
-
-/* Header Styles */
-.waterloo-header {
-	background-color: #000;
-	color: white;
-	position: sticky;
-	top: 0;
-	z-index: 100;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.header-container {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	max-width: 1400px;
-	margin: 0 auto;
-	padding: 0 2rem;
-	height: 70px;
-}
-
-.logo-section {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-}
-
-.logo {
-	width: 40px;
-	height: 40px;
-	border-radius: 4px;
-}
-
-.logo-text {
-	display: flex;
-	flex-direction: column;
-	line-height: 1;
-}
-
-.university {
-	font-size: 0.75rem;
-	font-weight: 400;
-	letter-spacing: 1px;
-	color: #ccc;
-}
-
-.waterloo {
-	font-size: 1.1rem;
-	font-weight: 700;
-	letter-spacing: 0.5px;
-	color: white;
-}
-
-.main-nav {
-	display: flex;
-	align-items: center;
-	gap: 2rem;
-	flex: 1;
-	justify-content: center;
-}
-
-.nav-link {
-	color: white;
-	text-decoration: none;
-	font-size: 0.95rem;
-	font-weight: 400;
-	padding: 0.5rem 0;
-	transition: color 0.2s ease;
-	white-space: nowrap;
-}
-
-.nav-link:hover {
-	color: #ffd700;
-}
-
-.nav-link.active {
-	color: #ffd700;
-	border-bottom: 2px solid #ffd700;
-}
-
-.search-section {
-	display: flex;
-	align-items: center;
-}
-
-.search-container {
-	position: relative;
-	display: flex;
-	align-items: center;
-}
-
-.search-input {
-	background: transparent;
-	border: 1px solid #555;
-	color: white;
-	padding: 8px 40px 8px 12px;
-	border-radius: 4px;
-	font-size: 0.9rem;
-	width: 200px;
-	transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-
-.search-input::placeholder {
-	color: #aaa;
-}
-
-.search-input:focus {
-	outline: none;
-	border-color: #ffd700;
-	background-color: rgba(255, 255, 255, 0.05);
-}
-
-.search-button {
-	position: absolute;
-	right: 8px;
-	background: none;
-	border: none;
-	color: #aaa;
-	cursor: pointer;
-	padding: 4px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	transition: color 0.2s ease;
-}
-
-.search-button:hover {
-	color: #ffd700;
-}
-
-/* Home Page Styles */
-.home-page {
-	min-height: 100vh;
-}
-
-/* Import page-specific styles */
-@import './pages/Home/style.css';
-@import './pages/WarriorLife/style.css';
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-	.header-container {
-		padding: 0 1rem;
-	}
-	
-	.main-nav {
-		gap: 1.5rem;
-	}
-	
-	.nav-link {
-		font-size: 0.9rem;
-	}
-	
-	.search-input {
-		width: 160px;
-	}
-}
-
-@media (max-width: 768px) {
-	.header-container {
-		flex-wrap: wrap;
-		height: auto;
-		padding: 1rem;
-		gap: 1rem;
-	}
-	
-	.logo-section {
-		order: 1;
-	}
-	
-	.search-section {
-		order: 2;
-	}
-	
-	.main-nav {
-		order: 3;
-		width: 100%;
-		justify-content: flex-start;
-		gap: 1rem;
-		padding-top: 1rem;
-		border-top: 1px solid #333;
-		overflow-x: auto;
-		scrollbar-width: none;
-		-ms-overflow-style: none;
-	}
-	
-	.main-nav::-webkit-scrollbar {
-		display: none;
-	}
-	
-	.search-input {
-		width: 140px;
-		font-size: 0.85rem;
-	}
-}
-
-@media (max-width: 480px) {
-	.header-container {
-		padding: 0.75rem;
-	}
-	
-	.logo-text .university {
-		font-size: 0.65rem;
-	}
-	
-	.logo-text .waterloo {
-		font-size: 1rem;
-	}
-	
-	.nav-link {
-		font-size: 0.85rem;
-	}
-	
-	.search-input {
-		width: 120px;
-	}
+@layer components {
+  .waterloo-color-bars {
+    height: 7px;
+    width: 100%;
+    display: flex;
+  }
+  
+  .color-bar {
+    height: 100%;
+    width: 25%;
+    float: left;
+  }
+  
+  .color-bar-1 {
+    background-color: rgb(255, 254, 174);
+  }
+  
+  .color-bar-2 {
+    background-color: rgb(254, 232, 79);
+  }
+  
+  .color-bar-3 {
+    background-color: rgb(254, 212, 91);
+  }
+  
+  .color-bar-4 {
+    background-color: rgb(227, 179, 58);
+  }
 }
