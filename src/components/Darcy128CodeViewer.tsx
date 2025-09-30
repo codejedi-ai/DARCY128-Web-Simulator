@@ -204,68 +204,13 @@ export default function Darcy128CodeViewer() {
               </div>
             </div>
 
-            {/* CPU State Panel */}
-            <div style={{ width: '400px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {/* Registers */}
-              <div style={{ backgroundColor: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '2px solid #00ff00' }}>
-                <h3 style={{ color: '#00ff00', marginTop: 0 }}>Registers</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
-                  {cpuState?.registers.slice(0, 8).map((reg: any, index: number) => (
-                    <div key={index} style={{ 
-                      padding: '8px', 
-                      backgroundColor: 'rgba(0, 0, 0, 0.3)', 
-                      borderRadius: '5px',
-                      border: '1px solid #333'
-                    }}>
-                      <div style={{ fontWeight: 'bold', color: '#00ff00', fontSize: '12px' }}>{reg.name}</div>
-                      <div style={{ fontFamily: 'monospace', fontSize: '11px' }}>{reg.value}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Special Registers */}
-              <div style={{ backgroundColor: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '2px solid #00ff00' }}>
-                <h3 style={{ color: '#00ff00', marginTop: 0 }}>Special Registers</h3>
-                <div style={{ marginTop: '10px' }}>
-                  <div style={{ 
-                    padding: '8px', 
-                    backgroundColor: 'rgba(0, 0, 0, 0.3)', 
-                    borderRadius: '5px',
-                    border: '1px solid #333',
-                    marginBottom: '8px'
-                  }}>
-                    <div style={{ fontWeight: 'bold', color: '#00ff00', fontSize: '12px' }}>PC (Program Counter)</div>
-                    <div style={{ fontFamily: 'monospace', fontSize: '11px' }}>0x{cpuState?.pc?.toString(16).padStart(8, '0')}</div>
-                  </div>
-                  <div style={{ 
-                    padding: '8px', 
-                    backgroundColor: 'rgba(0, 0, 0, 0.3)', 
-                    borderRadius: '5px',
-                    border: '1px solid #333',
-                    marginBottom: '8px'
-                  }}>
-                    <div style={{ fontWeight: 'bold', color: '#00ff00', fontSize: '12px' }}>HI (High)</div>
-                    <div style={{ fontFamily: 'monospace', fontSize: '11px' }}>{cpuState?.hi}</div>
-                  </div>
-                  <div style={{ 
-                    padding: '8px', 
-                    backgroundColor: 'rgba(0, 0, 0, 0.3)', 
-                    borderRadius: '5px',
-                    border: '1px solid #333'
-                  }}>
-                    <div style={{ fontWeight: 'bold', color: '#00ff00', fontSize: '12px' }}>LO (Low)</div>
-                    <div style={{ fontFamily: 'monospace', fontSize: '11px' }}>{cpuState?.lo}</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Execution History */}
+            {/* Right Panel - Execution History Only */}
+            <div style={{ width: '400px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ 
                 backgroundColor: '#1a1a1a', 
                 borderRadius: '10px', 
                 border: '2px solid #00ff00',
-                flex: 1,
+                height: '100%',
                 display: 'flex',
                 flexDirection: 'column'
               }}>

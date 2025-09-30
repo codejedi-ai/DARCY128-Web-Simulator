@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { Event } from "../types/Event";
 import { PageEntity as Paper } from "../types/PageEntity";
 import { PageEntityFactory } from "../types/PageEntityFactory";
-import AddItemForm from "./AddItemForm";
+// Instruction programming (Scratch-style)
 import { workerManager } from "../utils/workerManager";
 import { deletionManager } from "../utils/deletionManager";
 
@@ -16,7 +16,37 @@ export default function Canvas({ screenWidth }: CanvasProps) {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [activeEvent, setActiveEvent] = useState<Event | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
+  // Scratch-style instruction programming state
+  interface InstructionBlock {
+    id: string;
+    type: 'add' | 'sub' | 'mult' | 'div' | 'lw' | 'sw' | 'beq' | 'bne' | 'lis' | 'jr' | 'jalr';
+    x: number;
+    y: number;
+    params: { [key: string]: string };
+  }
+  interface CommandTemplate {
+    type: InstructionBlock['type'];
+    name: string;
+    params: string[];
+    description: string;
+  }
+  const commandTemplates: CommandTemplate[] = [
+    { type: 'add', name: 'ADD', params: ['rd', 'rs', 'rt'], description: 'Add two registers' },
+    { type: 'sub', name: 'SUB', params: ['rd', 'rs', 'rt'], description: 'Subtract two registers' },
+    { type: 'mult', name: 'MULT', params: ['rs', 'rt'], description: 'Multiply two registers' },
+    { type: 'div', name: 'DIV', params: ['rs', 'rt'], description: 'Divide two registers' },
+    { type: 'lw', name: 'LW', params: ['rt', 'rs', 'offset'], description: 'Load word' },
+    { type: 'sw', name: 'SW', params: ['rt', 'rs', 'offset'], description: 'Store word' },
+    { type: 'beq', name: 'BEQ', params: ['rs', 'rt', 'offset'], description: 'Branch if equal' },
+    { type: 'bne', name: 'BNE', params: ['rs', 'rt', 'offset'], description: 'Branch if not equal' },
+    { type: 'lis', name: 'LIS', params: ['rd', 'immediate'], description: 'Load immediate' },
+    { type: 'jr', name: 'JR', params: ['rs'], description: 'Jump register' },
+    { type: 'jalr', name: 'JALR', params: ['rs'], description: 'Jump and link register' }
+  ];
+  const [instructionBlocks, setInstructionBlocks] = useState<InstructionBlock[]>([]);
+  const [showInstructionBuilder, setShowInstructionBuilder] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<CommandTemplate | null>(null);
+  const [builderParams, setBuilderParams] = useState<{ [key: string]: string }>({});
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [scale, setScale] = useState(1);
@@ -161,8 +191,27 @@ export default function Canvas({ screenWidth }: CanvasProps) {
         ctx.stroke();
       }
 
-      // Draw all papers (which now include push pins)
+      // Draw all papers (legacy content on board)
       papers.forEach((paper) => paper.draw(ctx));
+
+      // Draw instruction blocks (Scratch-style)
+      instructionBlocks.forEach((block) => {
+        const blockWidth = 150;
+        const blockHeight = 60;
+        ctx.fillStyle = '#0066ff';
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(block.x, block.y, blockWidth, blockHeight, 8);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px monospace';
+        ctx.fillText(block.type.toUpperCase(), block.x + 10, block.y + 18);
+        ctx.font = '10px monospace';
+        const paramsText = Object.entries(block.params).map(([k,v]) => `${k}:${v}`).join('  ');
+        ctx.fillText(paramsText, block.x + 10, block.y + 36);
+      });
 
       
       // Restore context
@@ -223,7 +272,7 @@ export default function Canvas({ screenWidth }: CanvasProps) {
         }
       }
       
-      // If not clicking on an event, start panning
+      // If not clicking on an event, start panning (instructions are static for now)
       if (!clickedOnEvent) {
         setIsPanning(true);
         setLastPanPoint({ x: mouseX, y: mouseY });
@@ -484,35 +533,22 @@ export default function Canvas({ screenWidth }: CanvasProps) {
     return dayColors[dayOfWeek];
   };
 
-  const addEvent = async (title: string, description: string, link: string = "", buttonColor: string = "#4CAF50", time?: string) => {
-    try {
-      // Calculate center of screen in world coordinates
-      const screenCenterX = ((window.innerWidth / 2) - panOffset.x) / scale;
-      const screenCenterY = ((window.innerHeight / 2) - panOffset.y) / scale;
-      
-      const now = new Date();
-      const eventData = {
-        title,
-        description,
-        link,
-        x: screenCenterX,
-        y: screenCenterY,
-        color: getPaperColorByDay(now),
-        buttonColor,
-        time,
-        createdAt: now
-      };
-
-      const newEvent = await workerManager.createPage(eventData);
-      setEvents(prev => [...prev, newEvent]);
-      setPapers(prev => [...prev, PageEntityFactory.create(newEvent)]);
-      console.log(`🎉 Paper "${title}" added to bulletin board`);
-      setShowAddForm(false);
-    } catch (error) {
-      console.error('Failed to create event:', error);
-      // Still close the form even if creation fails
-      setShowAddForm(false);
-    }
+  const addInstructionBlock = () => {
+    if (!selectedTemplate) return;
+    // Place near center
+    const x = ((window.innerWidth / 2) - panOffset.x) / scale - 75;
+    const y = ((window.innerHeight / 2) - panOffset.y) / scale - 30 + instructionBlocks.length * 70;
+    const newBlock: InstructionBlock = {
+      id: `inst-${Date.now()}`,
+      type: selectedTemplate.type,
+      x,
+      y,
+      params: builderParams
+    };
+    setInstructionBlocks(prev => [...prev, newBlock]);
+    setShowInstructionBuilder(false);
+    setSelectedTemplate(null);
+    setBuilderParams({});
   };
 
   const deleteEvent = async (index: number) => {
@@ -549,7 +585,7 @@ export default function Canvas({ screenWidth }: CanvasProps) {
       display: "flex",
       zIndex: 1
     }}>
-      {/* Collapsible Sidebar with Canvas Controls */}
+      {/* Collapsible Sidebar with Instruction Builder */}
       <div style={{
         width: isSidebarCollapsed ? "60px" : "250px",
         background: "rgba(0, 0, 0, 0.8)",
@@ -593,37 +629,31 @@ export default function Canvas({ screenWidth }: CanvasProps) {
 
         {!isSidebarCollapsed && (
           <>
-            <h3 style={{ 
-              color: "#00ffff", 
-              margin: "0 0 10px 0", 
-              fontSize: "18px",
-              fontWeight: "bold"
-            }}>
-              Canvas Controls
+            <h3 style={{ color: "#00ffff", margin: "0 0 10px 0", fontSize: "18px", fontWeight: "bold" }}>
+              Visual Programmer
             </h3>
             
-            <button
-              onClick={() => setShowAddForm(true)}
-              style={{
-                padding: '12px 16px',
-                background: 'rgba(0, 255, 255, 0.9)',
-                border: 'none',
-                borderRadius: '6px',
-                color: 'white',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(0, 255, 255, 1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(0, 255, 255, 0.9)';
-              }}
-            >
-              + Add Event
-            </button>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              {commandTemplates.map((cmd, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => { setSelectedTemplate(cmd); setBuilderParams({}); setShowInstructionBuilder(true); }}
+                  style={{
+                    padding: '10px',
+                    background: 'rgba(0, 102, 255, 0.9)',
+                    border: '1px solid rgba(0, 255, 255, 0.5)',
+                    borderRadius: '6px',
+                    color: 'white',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {cmd.name}
+                </button>
+              ))}
+            </div>
             
             <button
               onClick={() => setIsDeleteMode(!isDeleteMode)}
@@ -666,7 +696,7 @@ export default function Canvas({ screenWidth }: CanvasProps) {
               </div>
             </div>
 
-            {/* Instructions */}
+            {/* Tips */}
             <div style={{
               marginTop: "10px",
               padding: "15px",
@@ -674,11 +704,10 @@ export default function Canvas({ screenWidth }: CanvasProps) {
               borderRadius: "6px",
               border: "1px solid rgba(255, 255, 255, 0.1)"
             }}>
-              <h4 style={{ color: "#00ffff", margin: "0 0 10px 0", fontSize: "14px" }}>
-                Instructions
-              </h4>
+              <h4 style={{ color: "#00ffff", margin: "0 0 10px 0", fontSize: "14px" }}>How to Use</h4>
               <div style={{ color: "#ccc", fontSize: "11px", lineHeight: "1.4" }}>
-                <div>• Drag papers to move them</div>
+                <div>• Click a command to add an instruction block</div>
+                <div>• Drag blocks around the canvas</div>
                 <div>• Mouse wheel to zoom</div>
                 <div>• Click + drag to pan</div>
                 <div>• Two fingers to zoom/pan on mobile</div>
