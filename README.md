@@ -1,3 +1,21 @@
+# DARCY128-Web-Simulator
+
+This project simulates the DARCY128 128-bit RISC processor in the browser with:
+- Visual programming canvas (Scratch-style instruction blocks)
+- MIPS instruction stepping page with execution history
+- Full register view page
+
+## DARCY128 ISA Reference
+
+The complete DARCY128 Instruction Set Architecture manual is included below for convenience.
+
+<details>
+<summary>Open DARCY128 ISA Reference</summary>
+
+[See ISA.md](ISA.md)
+
+</details>
+
 # DarcOS 🖥️
 
 **Device Agnostic Runtime Compatible Operating System**

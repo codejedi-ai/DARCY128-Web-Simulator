@@ -21,78 +21,34 @@ export default function Darcy128CodeViewer() {
   const [currentLine, setCurrentLine] = useState(-1);
   const [executionHistory, setExecutionHistory] = useState<string[]>([]);
 
-  // Initialize CPU
   useEffect(() => {
-    const initializeCPU = async () => {
+    const init = async () => {
       try {
         const state = await stateService.loadState();
-        if (state) {
-          setCpuState(state.cpuState);
+        if (state?.cpuState) {
           cpu.setState(state.cpuState);
+          setCpuState(state.cpuState);
         } else {
-          const initialState = cpu.getState();
-          setCpuState(initialState);
+          setCpuState(cpu.getState());
         }
-      } catch (error) {
-        console.error('Failed to initialize CPU:', error);
-        const initialState = cpu.getState();
-        setCpuState(initialState);
+      } catch {
+        setCpuState(cpu.getState());
       }
     };
-
-    initializeCPU();
+    init();
   }, []);
 
-  // Sample compiled program
   useEffect(() => {
-    const sampleProgram: CompiledInstruction[] = [
-      {
-        id: '1',
-        type: 'lis',
-        params: { rd: '1', immediate: '100' },
-        hexCode: '0x00000814',
-        assembly: 'lis $1, 100',
-        lineNumber: 1
-      },
-      {
-        id: '2',
-        type: 'lis',
-        params: { rd: '2', immediate: '200' },
-        hexCode: '0x00001014',
-        assembly: 'lis $2, 200',
-        lineNumber: 2
-      },
-      {
-        id: '3',
-        type: 'add',
-        params: { rd: '3', rs: '1', rt: '2' },
-        hexCode: '0x00221820',
-        assembly: 'add $3, $1, $2',
-        lineNumber: 3
-      },
-      {
-        id: '4',
-        type: 'sw',
-        params: { rt: '3', rs: '0', offset: '0' },
-        hexCode: '0xAC030000',
-        assembly: 'sw $3, 0($0)',
-        lineNumber: 4
-      },
-      {
-        id: '5',
-        type: 'jr',
-        params: { rs: '0' },
-        hexCode: '0x00000008',
-        assembly: 'jr $0',
-        lineNumber: 5
-      }
+    const sample: CompiledInstruction[] = [
+      { id: '1', type: 'lis', params: { rd: '1', immediate: '100' }, hexCode: '0x00000814', assembly: 'lis $1, 100', lineNumber: 1 },
+      { id: '2', type: 'lis', params: { rd: '2', immediate: '200' }, hexCode: '0x00001014', assembly: 'lis $2, 200', lineNumber: 2 },
+      { id: '3', type: 'add', params: { rd: '3', rs: '1', rt: '2' }, hexCode: '0x00221820', assembly: 'add $3, $1, $2', lineNumber: 3 },
+      { id: '4', type: 'jr', params: { rs: '0' }, hexCode: '0x00000008', assembly: 'jr $0', lineNumber: 4 }
     ];
-    setCompiledCode(sampleProgram);
+    setCompiledCode(sample);
   }, []);
 
-  const addToHistory = (message: string) => {
-    setExecutionHistory(prev => [...prev, message]);
-  };
+  const addToHistory = (m: string) => setExecutionHistory(prev => [...prev, m]);
 
   const executeNextInstruction = async () => {
     if (currentLine >= compiledCode.length - 1) {
@@ -100,54 +56,40 @@ export default function Darcy128CodeViewer() {
       setIsRunning(false);
       return;
     }
-
-    const nextLine = currentLine + 1;
-    const instruction = compiledCode[nextLine];
-    
-    setCurrentLine(nextLine);
-    addToHistory(`Executing line ${nextLine + 1}: ${instruction.assembly}`);
-
+    const idx = currentLine + 1;
+    const inst = compiledCode[idx];
+    setCurrentLine(idx);
+    addToHistory(`Executing line ${idx + 1}: ${inst.assembly}`);
     try {
-      const hexInstruction = new HexInstruction(instruction.hexCode);
+      const hexInstruction = new HexInstruction(inst.hexCode);
       cpu.executeInstruction(hexInstruction);
-      
       const newState = cpu.getState();
       setCpuState(newState);
-      
-      addToHistory(`Instruction executed successfully`);
-      
-      // Auto-save state
+      addToHistory('Instruction executed successfully');
       await stateService.saveState(newState, executionHistory, {});
-    } catch (error) {
-      addToHistory(`Error executing instruction: ${error}`);
+    } catch (e) {
+      addToHistory(`Error: ${e}`);
     }
   };
 
   const runAllInstructions = async () => {
     setIsRunning(true);
     setCurrentLine(-1);
-    
     for (let i = 0; i < compiledCode.length; i++) {
       await executeNextInstruction();
-      await new Promise(resolve => setTimeout(resolve, 500)); // Delay for visual effect
+      await new Promise(r => setTimeout(r, 300));
     }
-    
     setIsRunning(false);
   };
 
   const resetProgram = async () => {
     cpu.reset();
-    const initialState = cpu.getState();
-    setCpuState(initialState);
+    const s = cpu.getState();
+    setCpuState(s);
     setCurrentLine(-1);
     setExecutionHistory([]);
     addToHistory('Program reset');
-    
-    try {
-      await stateService.saveState(initialState, [], {});
-    } catch (error) {
-      console.error('Failed to save reset state:', error);
-    }
+    try { await stateService.saveState(s, [], {}); } catch {}
   };
 
   return (
@@ -155,81 +97,45 @@ export default function Darcy128CodeViewer() {
       <Navbar />
       <div style={{ paddingTop: '80px', padding: '20px' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-          {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div>
-              <h1 style={{ color: '#00ffff', fontSize: '32px', margin: 0 }}>DARCY128 Code Viewer</h1>
-              <p style={{ color: '#cccccc', marginTop: '10px' }}>
-                View and execute compiled DARCY128 assembly code
-              </p>
-            </div>
+          <div style={{ marginBottom: '20px' }}>
+            <h1 style={{ color: '#00ffff', fontSize: '32px', margin: 0 }}>MIPS Step</h1>
+            <p style={{ color: '#cccccc', marginTop: '10px' }}>Execute compiled assembly step-by-step</p>
           </div>
 
-          {/* Main Content */}
-          <div style={{ display: 'flex', gap: '20px', height: 'calc(100vh - 200px)' }}>
+          <div style={{ display: 'flex', gap: '20px', height: 'calc(100vh - 220px)' }}>
             {/* Code Panel */}
-            <div style={{ flex: 1, backgroundColor: '#1a1a1a', borderRadius: '10px', border: '2px solid #00ffff', overflow: 'hidden' }}>
-              <div style={{ padding: '20px', borderBottom: '1px solid #333', backgroundColor: '#0a0a0a' }}>
+            <div style={{ flex: 1, backgroundColor: '#1a1a1a', borderRadius: '10px', border: '2px solid #00ffff', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ padding: '16px', borderBottom: '1px solid #333', backgroundColor: '#0a0a0a' }}>
                 <h3 style={{ color: '#00ffff', margin: 0 }}>Compiled Assembly Code</h3>
               </div>
-              <div style={{ padding: '20px', height: 'calc(100% - 80px)', overflowY: 'auto' }}>
+              <div style={{ padding: '16px', flex: 1, overflowY: 'auto' }}>
                 <div style={{ fontFamily: 'monospace', fontSize: '14px' }}>
                   {compiledCode.map((instruction, index) => (
-                    <div
-                      key={instruction.id}
-                      style={{
-                        padding: '10px',
-                        marginBottom: '5px',
-                        backgroundColor: currentLine === index ? '#ff4444' : 'rgba(0, 0, 0, 0.3)',
-                        borderRadius: '5px',
-                        border: currentLine === index ? '2px solid #ff0000' : '1px solid #333',
-                        color: currentLine === index ? '#fff' : '#ccc',
-                        fontWeight: currentLine === index ? 'bold' : 'normal'
-                      }}
-                    >
+                    <div key={instruction.id} style={{ padding: '10px', marginBottom: '6px', backgroundColor: currentLine === index ? '#ff4444' : 'rgba(0,0,0,0.3)', borderRadius: '5px', border: currentLine === index ? '2px solid #ff0000' : '1px solid #333', color: currentLine === index ? '#fff' : '#ccc' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#888', fontSize: '12px' }}>
-                          Line {instruction.lineNumber}:
-                        </span>
-                        <span style={{ color: '#00ff00', fontSize: '12px' }}>
-                          {instruction.hexCode}
-                        </span>
+                        <span style={{ color: '#888', fontSize: '12px' }}>Line {instruction.lineNumber}:</span>
+                        <span style={{ color: '#00ff00', fontSize: '12px' }}>{instruction.hexCode}</span>
                       </div>
-                      <div style={{ marginTop: '5px', fontSize: '16px' }}>
-                        {instruction.assembly}
-                      </div>
+                      <div style={{ marginTop: '4px', fontSize: '16px' }}>{instruction.assembly}</div>
                     </div>
                   ))}
                 </div>
               </div>
+              {/* Controls bottom */}
+              <div style={{ padding: '12px', borderTop: '1px solid #333', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button onClick={executeNextInstruction} disabled={isRunning || currentLine >= compiledCode.length - 1} style={{ padding: '10px 20px', backgroundColor: isRunning || currentLine >= compiledCode.length - 1 ? '#666' : '#0066ff', color: '#fff', border: 'none', borderRadius: '5px', cursor: isRunning || currentLine >= compiledCode.length - 1 ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}>⏭️ Next Step</button>
+                <button onClick={runAllInstructions} disabled={isRunning} style={{ padding: '10px 20px', backgroundColor: isRunning ? '#666' : '#00ff00', color: '#fff', border: 'none', borderRadius: '5px', cursor: isRunning ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}>▶️ Run All</button>
+                <button onClick={resetProgram} disabled={isRunning} style={{ padding: '10px 20px', backgroundColor: isRunning ? '#666' : '#ff6600', color: '#fff', border: 'none', borderRadius: '5px', cursor: isRunning ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}>🔄 Reset</button>
+              </div>
             </div>
 
-            {/* Right Panel - Execution History Only */}
+            {/* Right Panel - Execution History */}
             <div style={{ width: '400px', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ 
-                backgroundColor: '#1a1a1a', 
-                borderRadius: '10px', 
-                border: '2px solid #00ff00',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column'
-              }}>
-                <div style={{ 
-                  padding: '15px', 
-                  borderBottom: '1px solid #333',
-                  backgroundColor: '#0a0a0a'
-                }}>
+              <div style={{ backgroundColor: '#1a1a1a', borderRadius: '10px', border: '2px solid #00ff00', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '15px', borderBottom: '1px solid #333', backgroundColor: '#0a0a0a' }}>
                   <h3 style={{ color: '#00ff00', margin: 0 }}>Execution History</h3>
                 </div>
-                <div style={{ 
-                  flex: 1,
-                  padding: '15px',
-                  overflowY: 'auto',
-                  fontFamily: 'monospace',
-                  fontSize: '12px',
-                  color: '#00ff00',
-                  backgroundColor: '#000'
-                }}>
+                <div style={{ flex: 1, padding: '15px', overflowY: 'auto', fontFamily: 'monospace', fontSize: '12px', color: '#00ff00', backgroundColor: '#000' }}>
                   {executionHistory.map((entry, index) => (
                     <div key={index} style={{ marginBottom: '5px' }}>
                       <span style={{ color: '#888' }}>[{new Date().toLocaleTimeString()}]</span> {entry}
@@ -243,55 +149,6 @@ export default function Darcy128CodeViewer() {
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Controls at bottom */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
-            <button
-              onClick={executeNextInstruction}
-              disabled={isRunning || currentLine >= compiledCode.length - 1}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: isRunning || currentLine >= compiledCode.length - 1 ? '#666' : '#0066ff',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: isRunning || currentLine >= compiledCode.length - 1 ? 'not-allowed' : 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              ⏭️ Next Step
-            </button>
-            <button
-              onClick={runAllInstructions}
-              disabled={isRunning}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: isRunning ? '#666' : '#00ff00',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: isRunning ? 'not-allowed' : 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              ▶️ Run All
-            </button>
-            <button
-              onClick={resetProgram}
-              disabled={isRunning}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: isRunning ? '#666' : '#ff6600',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: isRunning ? 'not-allowed' : 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              🔄 Reset
-            </button>
           </div>
         </div>
       </div>

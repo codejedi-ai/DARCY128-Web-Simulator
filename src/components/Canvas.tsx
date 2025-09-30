@@ -19,7 +19,7 @@ export default function Canvas({ screenWidth }: CanvasProps) {
   // Scratch-style instruction programming state
   interface InstructionBlock {
     id: string;
-    type: 'add' | 'sub' | 'mult' | 'div' | 'lw' | 'sw' | 'beq' | 'bne' | 'lis' | 'jr' | 'jalr';
+    type: 'add' | 'sub' | 'mult' | 'multu' | 'div' | 'divu' | 'mfhi' | 'mflo' | 'slt' | 'sltu' | 'lw' | 'sw' | 'beq' | 'bne' | 'lis' | 'jr' | 'jalr';
     x: number;
     y: number;
     params: { [key: string]: string };
@@ -33,8 +33,14 @@ export default function Canvas({ screenWidth }: CanvasProps) {
   const commandTemplates: CommandTemplate[] = [
     { type: 'add', name: 'ADD', params: ['rd', 'rs', 'rt'], description: 'Add two registers' },
     { type: 'sub', name: 'SUB', params: ['rd', 'rs', 'rt'], description: 'Subtract two registers' },
-    { type: 'mult', name: 'MULT', params: ['rs', 'rt'], description: 'Multiply two registers' },
-    { type: 'div', name: 'DIV', params: ['rs', 'rt'], description: 'Divide two registers' },
+    { type: 'mult', name: 'MULT', params: ['rs', 'rt'], description: 'Multiply (signed) stores HI:LO' },
+    { type: 'multu', name: 'MULTU', params: ['rs', 'rt'], description: 'Multiply (unsigned) stores HI:LO' },
+    { type: 'div', name: 'DIV', params: ['rs', 'rt'], description: 'Divide (signed) LO=quot HI=rem' },
+    { type: 'divu', name: 'DIVU', params: ['rs', 'rt'], description: 'Divide (unsigned) LO=quot HI=rem' },
+    { type: 'mfhi', name: 'MFHI', params: ['rd'], description: 'Move from HI to rd' },
+    { type: 'mflo', name: 'MFLO', params: ['rd'], description: 'Move from LO to rd' },
+    { type: 'slt', name: 'SLT', params: ['rd', 'rs', 'rt'], description: 'Set rd=1 if rs<rt (signed)' },
+    { type: 'sltu', name: 'SLTU', params: ['rd', 'rs', 'rt'], description: 'Set rd=1 if rs<rt (unsigned)' },
     { type: 'lw', name: 'LW', params: ['rt', 'rs', 'offset'], description: 'Load word' },
     { type: 'sw', name: 'SW', params: ['rt', 'rs', 'offset'], description: 'Store word' },
     { type: 'beq', name: 'BEQ', params: ['rs', 'rt', 'offset'], description: 'Branch if equal' },
@@ -776,13 +782,7 @@ export default function Canvas({ screenWidth }: CanvasProps) {
         </div>
       )}
 
-      {showAddForm && (
-        <AddItemForm
-          onSubmit={addEvent}
-          onCancel={() => setShowAddForm(false)}
-          screenWidth={screenWidth}
-        />
-      )}
+      {/* Instruction builder modal is handled inline via sidebar buttons in this version */}
     </div>
   );
 }
