@@ -2,6 +2,7 @@ import { useState, useEffect } from 'preact/hooks';
 import App from './App';
 import FeaturesPage from './pages/pages/features';
 import MipsEmulator from './components/MipsEmulator';
+import Darcy128Emulator from './components/Darcy128Emulator';
 
 export default function Router() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -25,9 +26,14 @@ export default function Router() {
     return <App onNavigate={navigate} />;
   }
 
-  // Route to MIPS emulator
+  // Route to MIPS emulator (legacy)
   if (currentPath === '/mips' || currentPath === '/emulator') {
     return <MipsEmulator screenWidth={window.innerWidth} />;
+  }
+
+  // Route to Darcy128 emulator (revolutionary 128-bit processor)
+  if (currentPath === '/darcy128' || currentPath === '/darcy128-emulator') {
+    return <Darcy128Emulator screenWidth={window.innerWidth} />;
   }
 
   // Route to Features (home page)

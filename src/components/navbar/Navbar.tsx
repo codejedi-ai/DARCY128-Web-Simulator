@@ -26,7 +26,8 @@ const Navbar = ({ screenWidth }: NavbarProps = {}) => {
   const navItems = [
     { path: '/features', label: 'Features' },
     { path: '/demo', label: 'Canvas' },
-    { path: '/mips', label: 'MIPS32 Emulator' },
+    { path: '/darcy128', label: '🚀 DARCY128' },
+    { path: '/mips', label: 'MIPS32 (Legacy)' },
   ];
 
   return (
