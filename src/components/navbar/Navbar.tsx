@@ -24,7 +24,6 @@ const Navbar = ({ screenWidth }: NavbarProps = {}) => {
   }, []);
   
   const navItems = [
-    { path: '/features', label: 'Features' },
     { path: '/demo', label: 'Canvas' },
     { path: '/darcy128', label: '🚀 DARCY128' },
     { path: '/tests', label: '🧪 Tests' },
