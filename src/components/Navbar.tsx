@@ -1,74 +1,104 @@
-export function Navbar() {
+import React from 'react';
+import DropdownMenu from './DropdownMenu';
+
+interface NavbarProps {
+  screenWidth: number;
+  isDeleteMode: boolean;
+  onToggleDeleteMode: () => void;
+  onAddEvent: () => void;
+}
+
+export default function Navbar({ 
+  screenWidth, 
+  isDeleteMode, 
+  onToggleDeleteMode, 
+  onAddEvent 
+}: NavbarProps) {
   return (
-    <header className="bg-black text-white sticky top-0 z-50 shadow-lg">
-      <div className="mx-8 lg:mx-16">
-        <div className="flex items-center justify-between h-[70px]">
-          {/* Logo Section */}
-          <div className="flex items-center gap-3">
-            <img 
-              src="logo.png" 
-              alt="University of Waterloo Logo" 
-              className="w-10 h-10 rounded"
-            />
-            <div className="flex flex-col leading-none">
-              <span className="text-xs font-normal tracking-widest text-gray-300">UNIVERSITY OF</span>
-              <span className="text-lg font-bold tracking-wide text-white">WATERLOO</span>
-            </div>
-          </div>
-          
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-8 flex-1 justify-center">
-            <a href="#" className="text-white text-sm font-medium py-2 px-4 rounded-md transition-all duration-200 hover:text-waterloo-gold hover:bg-white/10 whitespace-nowrap">
-              About
-            </a>
-            <a href="#" className="text-white text-sm font-medium py-2 px-4 rounded-md transition-all duration-200 hover:text-waterloo-gold hover:bg-white/10 whitespace-nowrap">
-              Challenges
-            </a>
-            <a href="#" className="text-white text-sm font-medium py-2 px-4 rounded-md transition-all duration-200 hover:text-waterloo-gold hover:bg-white/10 whitespace-nowrap">
-              Schedule
-            </a>
-          </nav>
-
-          {/* Search Section */}
-          <div className="flex items-center">
-            <div className="relative flex items-center">
-              <input 
-                type="text" 
-                placeholder="Search" 
-                className="bg-transparent border border-gray-600 text-white px-3 py-2 pr-10 rounded text-sm w-48 transition-all duration-200 placeholder-gray-400 focus:outline-none focus:border-waterloo-gold focus:bg-white/5"
-              />
-              <button className="absolute right-2 text-gray-400 hover:text-waterloo-gold transition-colors duration-200 p-1">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <path d="m21 21-4.35-4.35"></path>
-                </svg>
-              </button>
-            </div>
-          </div>
+    <header 
+      style={{
+        position: "fixed", 
+        top: 0,
+        left: 0,
+        width: "100%",
+        background: "#000000",
+        color: "white",
+        padding: screenWidth < 768 ? "10px 0" : "15px 0",
+        zIndex: 1000,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.3)"
+      }}
+    >
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center", 
+        width: "100%",
+        maxWidth: "100vw",
+        padding: screenWidth < 768 ? "0 10px" : "0 20px",
+        gap: screenWidth < 768 ? "5px" : "15px",
+        boxSizing: "border-box"
+      }}>
+        {/* Left: Push Pin Icon */}
+        <div style={{ 
+          display: "flex", 
+          alignItems: "center", 
+          fontSize: screenWidth < 768 ? "18px" : "24px",
+          flexShrink: 0,
+          minWidth: screenWidth < 480 ? "30px" : "40px"
+        }}>
+          📌
         </div>
-      </div>
-      
-      {/* Color Bars */}
-      <div className="waterloo-color-bars">
-        <div className="color-bar color-bar-1"></div>
-        <div className="color-bar color-bar-2"></div>
-        <div className="color-bar color-bar-3"></div>
-        <div className="color-bar color-bar-4"></div>
-      </div>
-
-      {/* Mobile Navigation */}
-      <div className="md:hidden px-8 pb-4 border-t border-gray-700">
-        <nav className="flex gap-2 pt-4 overflow-x-auto">
-          <a href="#" className="text-white text-sm font-medium py-2 px-4 rounded-md transition-all duration-200 hover:text-waterloo-gold hover:bg-white/10 whitespace-nowrap">
-            About
-          </a>
-          <a href="#" className="text-white text-sm font-medium py-2 px-4 rounded-md transition-all duration-200 hover:text-waterloo-gold hover:bg-white/10 whitespace-nowrap">
-            Challenges
-          </a>
-          <a href="#" className="text-white text-sm font-medium py-2 px-4 rounded-md transition-all duration-200 hover:text-waterloo-gold hover:bg-white/10 whitespace-nowrap">
-            Schedule
-          </a>
-        </nav>
+        
+        {/* Center: Title */}
+        <div style={{ 
+          flex: 1, 
+          textAlign: "center",
+          minWidth: 0, // Allow shrinking
+          overflow: "hidden",
+          padding: screenWidth < 480 ? "0 5px" : "0 10px"
+        }}>
+          <h1 style={{ 
+            margin: 0, 
+            fontSize: screenWidth < 480 ? "14px" : screenWidth < 768 ? "16px" : screenWidth < 1024 ? "20px" : "28px",
+            fontWeight: "bold",
+            letterSpacing: screenWidth < 768 ? "0.5px" : "1px",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            color: "white"
+          }}>
+            {screenWidth < 480 ? "Rizz Lords" : 
+             screenWidth < 768 ? "UW Rizz Lords" : 
+             "UW Rizz Lords Bulletin Board"}
+          </h1>
+        </div>
+        
+        {/* Right: Dropdown Menu */}
+        <div style={{ 
+          display: "flex", 
+          alignItems: "center",
+          flexShrink: 0
+        }}>
+          <DropdownMenu
+            buttonIcon="⚙️"
+            buttonTitle="Menu - Add events and manage items"
+            items={[
+              {
+                id: 'add',
+                label: 'Add Event',
+                icon: '+',
+                action: onAddEvent
+              },
+              {
+                id: 'delete',
+                label: isDeleteMode ? 'Exit Delete Mode' : 'Delete Mode',
+                icon: '🗑️',
+                action: onToggleDeleteMode,
+                variant: isDeleteMode ? 'danger' : 'default'
+              }
+            ]}
+          />
+        </div>
       </div>
     </header>
   );
