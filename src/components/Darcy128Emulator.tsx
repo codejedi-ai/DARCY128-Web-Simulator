@@ -11,6 +11,7 @@ import {
   UUID,
   IPv6Address
 } from "../types/Darcy128Types";
+import Darcy128ApiService, { Darcy128CPU as ApiCPU, EmulatorResponse } from "../services/darcy128ApiService";
 
 interface Darcy128EmulatorProps {
   screenWidth: number;
@@ -18,104 +19,73 @@ interface Darcy128EmulatorProps {
 
 export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const apiService = new Darcy128ApiService();
   
   // Darcy128 Instructions showcasing revolutionary capabilities
   const [instructions, setInstructions] = useState<Darcy128Instruction[]>([
     // Traditional MIPS32 compatibility
-    { address: 0x00400000, instruction: "addi $t0, $zero, 5", opcode: "addi", operands: ["$t0", "$zero", "5"], description: "Load immediate value 5 into $t0", category: "arithmetic", width: 32 },
+    { address: 0x00400000, instruction: "lis $1", opcode: "lis", operands: ["$1"], description: "Load immediate value into $1", category: "arithmetic", width: 32 },
+    { address: 0x00400004, instruction: ".word 100", opcode: "word", operands: ["100"], description: "Immediate value: 100", category: "arithmetic", width: 32 },
     
     // 128-bit arithmetic operations
-    { address: 0x00400004, instruction: "add128 $q0, $q1, $q2", opcode: "add128", operands: ["$q0", "$q1", "$q2"], description: "128-bit addition: $q0 = $q1 + $q2", category: "arithmetic", width: 128 },
+    { address: 0x00400008, instruction: "lis $2", opcode: "lis", operands: ["$2"], description: "Load immediate value into $2", category: "arithmetic", width: 32 },
+    { address: 0x0040000c, instruction: ".word 200", opcode: "word", operands: ["200"], description: "Immediate value: 200", category: "arithmetic", width: 32 },
+    { address: 0x00400010, instruction: "add $3, $1, $2", opcode: "add", operands: ["$3", "$1", "$2"], description: "128-bit addition: $3 = $1 + $2", category: "arithmetic", width: 128 },
     
-    // SIMD operations - 4x FP32 parallel processing
-    { address: 0x00400008, instruction: "vadd.f32 $v0, $v1, $v2", opcode: "vadd.f32", operands: ["$v0", "$v1", "$v2"], description: "SIMD: Add 4x FP32 vectors in parallel", category: "simd", width: 128 },
+    // Memory operations
+    { address: 0x00400014, instruction: "sw $3, 0($0)", opcode: "sw", operands: ["$3", "0", "$0"], description: "Store 128-bit word to memory", category: "memory", width: 128 },
     
-    // SIMD operations - 8x FP16 parallel processing  
-    { address: 0x0040000c, instruction: "vadd.f16 $v3, $v4, $v5", opcode: "vadd.f16", operands: ["$v3", "$v4", "$v5"], description: "SIMD: Add 8x FP16 vectors in parallel", category: "simd", width: 128 },
+    // Multiplication
+    { address: 0x00400018, instruction: "mult $1, $2", opcode: "mult", operands: ["$1", "$2"], description: "128-bit multiplication: HI:LO = $1 × $2", category: "arithmetic", width: 128 },
+    { address: 0x0040001c, instruction: "mflo $4", opcode: "mflo", operands: ["$4"], description: "Move from LO register", category: "arithmetic", width: 128 },
     
-    // Native AES encryption
-    { address: 0x00400010, instruction: "aes.encrypt $c0, $c1, $c2", opcode: "aes.encrypt", operands: ["$c0", "$c1", "$c2"], description: "Native AES-128 encryption in single cycle", category: "crypto", width: 128 },
+    // Division
+    { address: 0x00400020, instruction: "div $1, $2", opcode: "div", operands: ["$1", "$2"], description: "128-bit division: LO = quotient, HI = remainder", category: "arithmetic", width: 128 },
+    { address: 0x00400024, instruction: "mfhi $5", opcode: "mfhi", operands: ["$5"], description: "Move from HI register", category: "arithmetic", width: 128 },
     
-    // Quad-precision floating point
-    { address: 0x00400014, instruction: "qadd $qf0, $qf1, $qf2", opcode: "qadd", operands: ["$qf0", "$qf1", "$qf2"], description: "Quad-precision FP addition (113-bit mantissa)", category: "quad-precision", width: 128 },
-    
-    // Native UUID operations
-    { address: 0x00400018, instruction: "uuid.generate $u0", opcode: "uuid.generate", operands: ["$u0"], description: "Generate 128-bit UUID in hardware", category: "arithmetic", width: 128 },
-    
-    // IPv6 address operations
-    { address: 0x0040001c, instruction: "ipv6.compare $ip0, $ip1", opcode: "ipv6.compare", operands: ["$ip0", "$ip1"], description: "Native IPv6 address comparison", category: "arithmetic", width: 128 },
-    
-    // Matrix operations for AI/ML
-    { address: 0x00400020, instruction: "matmul.f32 $m0, $m1, $m2", opcode: "matmul.f32", operands: ["$m0", "$m1", "$m2"], description: "4x4 FP32 matrix multiplication", category: "simd", width: 128 },
+    // Branch test
+    { address: 0x00400028, instruction: "beq $1, $2, 4", opcode: "beq", operands: ["$1", "$2", "4"], description: "Branch if equal", category: "control", width: 32 },
+    { address: 0x0040002c, instruction: "jr $0", opcode: "jr", operands: ["$0"], description: "Jump to halt (address 0)", category: "control", width: 32 },
   ]);
   
   const [currentInstructionIndex, setCurrentInstructionIndex] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Darcy128 Register File - 128-bit registers
-  const [registers, setRegisters] = useState<{ [key: string]: Darcy128Register }>({
-    // General purpose 128-bit registers
-    "$q0": { name: "$q0", value: 0n, type: "general", width: 128 },
-    "$q1": { name: "$q1", value: 0n, type: "general", width: 128 },
-    "$q2": { name: "$q2", value: 0n, type: "general", width: 128 },
-    "$q3": { name: "$q3", value: 0n, type: "general", width: 128 },
-    
-    // Vector registers for SIMD
-    "$v0": { name: "$v0", value: 0n, type: "vector", width: 128 },
-    "$v1": { name: "$v1", value: 0n, type: "vector", width: 128 },
-    "$v2": { name: "$v2", value: 0n, type: "vector", width: 128 },
-    "$v3": { name: "$v3", value: 0n, type: "vector", width: 128 },
-    
-    // Crypto registers
-    "$c0": { name: "$c0", value: 0n, type: "crypto", width: 128 },
-    "$c1": { name: "$c1", value: 0n, type: "crypto", width: 128 },
-    "$c2": { name: "$c2", value: 0n, type: "crypto", width: 128 },
-    
-    // Quad-precision floating point registers
-    "$qf0": { name: "$qf0", value: 0n, type: "general", width: 128 },
-    "$qf1": { name: "$qf1", value: 0n, type: "general", width: 128 },
-    "$qf2": { name: "$qf2", value: 0n, type: "general", width: 128 },
-    
-    // Special purpose registers
-    "$u0": { name: "$u0", value: 0n, type: "general", width: 128 }, // UUID register
-    "$ip0": { name: "$ip0", value: 0n, type: "general", width: 128 }, // IPv6 register
-    "$ip1": { name: "$ip1", value: 0n, type: "general", width: 128 },
-    
-    // Matrix registers for AI/ML
-    "$m0": { name: "$m0", value: 0n, type: "vector", width: 128 },
-    "$m1": { name: "$m1", value: 0n, type: "vector", width: 128 },
-    "$m2": { name: "$m2", value: 0n, type: "vector", width: 128 },
-    
-    // Legacy MIPS32 compatibility
-    "$zero": { name: "$zero", value: 0n, type: "general", width: 128 },
-    "$t0": { name: "$t0", value: 0n, type: "general", width: 128 },
-    "$t1": { name: "$t1", value: 0n, type: "general", width: 128 },
-  });
-  
-  const [vectorRegisters, setVectorRegisters] = useState<{ [key: string]: Darcy128VectorRegister }>({
-    "$v0": { name: "$v0", fp32: [0, 0, 0, 0], fp16: [0, 0, 0, 0, 0, 0, 0, 0], int32: [0, 0, 0, 0], int16: [0, 0, 0, 0, 0, 0, 0, 0], int8: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
-    "$v1": { name: "$v1", fp32: [1.0, 2.0, 3.0, 4.0], fp16: [1, 2, 3, 4, 5, 6, 7, 8], int32: [1, 2, 3, 4], int16: [1, 2, 3, 4, 5, 6, 7, 8], int8: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] },
-    "$v2": { name: "$v2", fp32: [2.0, 3.0, 4.0, 5.0], fp16: [2, 3, 4, 5, 6, 7, 8, 9], int32: [2, 3, 4, 5], int16: [2, 3, 4, 5, 6, 7, 8, 9], int8: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17] },
-    "$v3": { name: "$v3", fp32: [0, 0, 0, 0], fp16: [0, 0, 0, 0, 0, 0, 0, 0], int32: [0, 0, 0, 0], int16: [0, 0, 0, 0, 0, 0, 0, 0], int8: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
-  });
-  
-  const [memory, setMemory] = useState<{ [key: number]: bigint }>({});
+  // Backend CPU state
+  const [cpuState, setCpuState] = useState<ApiCPU | null>(null);
   const [executionHistory, setExecutionHistory] = useState<string[]>([]);
-  const [executionState, setExecutionState] = useState<Darcy128ExecutionState>({
-    pc: 0x00400000,
-    mode: "128bit",
-    flags: { zero: false, carry: false, overflow: false, sign: false },
-    simdMode: "fp32"
+  const [performanceMetrics, setPerformanceMetrics] = useState({
+    instructions_executed: 0,
+    simd_utilization: 0,
+    crypto_acceleration: 0,
+    memory_bandwidth: 0
   });
   
-  const [metrics, setMetrics] = useState<Darcy128Metrics>({
-    instructionsPerCycle: 4.0, // 4x improvement over traditional processors
-    simdUtilization: 85.0, // 85% SIMD utilization
-    cryptoAcceleration: 300.0, // 300% faster crypto operations
-    quadPrecisionOps: 0,
-    memoryBandwidthUtilization: 75.0
-  });
+  // Initialize CPU state from backend
+  useEffect(() => {
+    initializeCPU();
+  }, []);
+  
+  const initializeCPU = async () => {
+    try {
+      setIsLoading(true);
+      const response = await apiService.getStatus();
+      if (response.success) {
+        setCpuState(response.cpu_state);
+        setExecutionHistory(response.execution_history);
+        if (response.performance_metrics) {
+          setPerformanceMetrics(response.performance_metrics);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to initialize CPU:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
 
   // Setup canvas for visual representation
   useEffect(() => {
@@ -214,48 +184,72 @@ export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps)
       ctx.font = "bold 16px monospace";
       ctx.fillText("DARCY128 Register File", registersX + 10, 35);
       
-      // Draw register categories
-      const registerCategories = [
-        { name: "General 128-bit", regs: ["$q0", "$q1", "$q2", "$q3"], color: "#00ffff" },
-        { name: "Vector SIMD", regs: ["$v0", "$v1", "$v2", "$v3"], color: "#ff9800" },
-        { name: "Crypto", regs: ["$c0", "$c1", "$c2"], color: "#4caf50" },
-        { name: "Quad-Precision", regs: ["$qf0", "$qf1", "$qf2"], color: "#ff5722" },
-        { name: "Special", regs: ["$u0", "$ip0", "$ip1"], color: "#9c27b0" },
-        { name: "Matrix AI/ML", regs: ["$m0", "$m1", "$m2"], color: "#e91e63" }
-      ];
-      
-      let currentY = startY;
-      registerCategories.forEach((category, catIndex) => {
-        // Draw category header
-        ctx.fillStyle = category.color;
-        ctx.font = "bold 12px monospace";
-        ctx.fillText(category.name, registersX + 10, currentY);
-        currentY += 20;
+      // Draw registers from backend CPU state
+      if (cpuState && cpuState.registers) {
+        const registerCategories = [
+          { name: "General Purpose", regs: cpuState.registers.slice(0, 8), color: "#00ffff" },
+          { name: "Arguments & Returns", regs: cpuState.registers.slice(8, 16), color: "#ff9800" },
+          { name: "Saved Registers", regs: cpuState.registers.slice(16, 24), color: "#4caf50" },
+          { name: "Special Registers", regs: cpuState.registers.slice(24, 32), color: "#ff5722" }
+        ];
         
-        // Draw registers in this category
-        category.regs.forEach((regName, regIndex) => {
-          const reg = registers[regName];
-          if (reg) {
+        let currentY = startY;
+        registerCategories.forEach((category, catIndex) => {
+          // Draw category header
+          ctx.fillStyle = category.color;
+          ctx.font = "bold 12px monospace";
+          ctx.fillText(category.name, registersX + 10, currentY);
+          currentY += 20;
+          
+          // Draw registers in this category
+          category.regs.forEach((reg, regIndex) => {
             ctx.fillStyle = "#fff";
             ctx.font = "11px monospace";
-            ctx.fillText(`${regName}:`, registersX + 20, currentY);
+            ctx.fillText(`${reg.name}:`, registersX + 20, currentY);
             
             // Display 128-bit value in hex
-            const hexValue = reg.value.toString(16).padStart(32, '0');
             ctx.fillStyle = "#8a2be2";
-            ctx.fillText(`0x${hexValue.substring(0, 8)}...`, registersX + 80, currentY);
+            ctx.fillText(reg.value.substring(0, 10) + "...", registersX + 80, currentY);
             
             // Show decimal value if small
-            if (reg.value < 1000000n) {
-              ctx.fillStyle = "#888";
-              ctx.fillText(`(${reg.value.toString()})`, registersX + 180, currentY);
+            try {
+              const decimalValue = BigInt(reg.value).toString();
+              if (decimalValue.length < 10) {
+                ctx.fillStyle = "#888";
+                ctx.fillText(`(${decimalValue})`, registersX + 180, currentY);
+              }
+            } catch (error) {
+              // Ignore parsing errors
             }
             
             currentY += 18;
-          }
+          });
+          currentY += 10;
         });
-        currentY += 10;
-      });
+        
+        // Draw special registers (PC, HI, LO)
+        ctx.fillStyle = "#9c27b0";
+        ctx.font = "bold 12px monospace";
+        ctx.fillText("Special Registers", registersX + 10, currentY);
+        currentY += 20;
+        
+        const specialRegs = [
+          { name: "PC", value: cpuState.pc },
+          { name: "HI", value: cpuState.hi },
+          { name: "LO", value: cpuState.lo }
+        ];
+        
+        specialRegs.forEach(reg => {
+          ctx.fillStyle = "#fff";
+          ctx.font = "11px monospace";
+          ctx.fillText(`${reg.name}:`, registersX + 20, currentY);
+          
+          ctx.fillStyle = "#8a2be2";
+          ctx.fillText(reg.value.substring(0, 10) + "...", registersX + 80, currentY);
+          
+          currentY += 18;
+        });
+      }
       
       // Draw execution history
       const historyY = currentY + 20;
@@ -277,11 +271,10 @@ export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps)
       ctx.fillText("DARCY128 Performance", registersX + 10, metricsY);
       
       const metricsData = [
-        `IPC: ${metrics.instructionsPerCycle.toFixed(1)}x`,
-        `SIMD Util: ${metrics.simdUtilization.toFixed(1)}%`,
-        `Crypto Accel: ${metrics.cryptoAcceleration.toFixed(0)}%`,
-        `Quad-Precision: ${metrics.quadPrecisionOps}`,
-        `Memory BW: ${metrics.memoryBandwidthUtilization.toFixed(1)}%`
+        `Instructions: ${performanceMetrics.instructions_executed}`,
+        `SIMD Util: ${performanceMetrics.simd_utilization.toFixed(1)}%`,
+        `Crypto Accel: ${performanceMetrics.crypto_acceleration.toFixed(0)}%`,
+        `Memory BW: ${performanceMetrics.memory_bandwidth.toFixed(1)}%`
       ];
       
       metricsData.forEach((metric, index) => {
@@ -299,7 +292,7 @@ export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps)
     return () => {
       cancelAnimationFrame(animationId);
     };
-  }, [instructions, currentInstructionIndex, registers, executionHistory, metrics, screenWidth]);
+  }, [instructions, currentInstructionIndex, cpuState, executionHistory, performanceMetrics, screenWidth]);
 
   // Handle window resize
   useEffect(() => {
@@ -315,138 +308,38 @@ export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps)
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const executeInstruction = (instruction: Darcy128Instruction) => {
-    const newRegisters = { ...registers };
-    const newVectorRegisters = { ...vectorRegisters };
-    let newHistory = [...executionHistory];
-    let newMetrics = { ...metrics };
-    
-    switch (instruction.opcode) {
-      case "addi":
-        // Legacy MIPS32 compatibility
-        const dest = instruction.operands[0];
-        const src = instruction.operands[1];
-        const imm = BigInt(parseInt(instruction.operands[2]));
-        newRegisters[dest].value = newRegisters[src].value + imm;
-        newHistory.push(`MIPS32: ${instruction.instruction} -> ${dest} = ${newRegisters[dest].value}`);
-        break;
-        
-      case "add128":
-        // 128-bit arithmetic
-        const dest128 = instruction.operands[0];
-        const src1_128 = instruction.operands[1];
-        const src2_128 = instruction.operands[2];
-        newRegisters[dest128].value = newRegisters[src1_128].value + newRegisters[src2_128].value;
-        newHistory.push(`128-bit: ${instruction.instruction} -> ${dest128} = 0x${newRegisters[dest128].value.toString(16)}`);
-        break;
-        
-      case "vadd.f32":
-        // SIMD: 4x FP32 parallel addition
-        const vdest = instruction.operands[0];
-        const vsrc1 = instruction.operands[1];
-        const vsrc2 = instruction.operands[2];
-        
-        const v1 = newVectorRegisters[vsrc1];
-        const v2 = newVectorRegisters[vsrc2];
-        const result = newVectorRegisters[vdest];
-        
-        for (let i = 0; i < 4; i++) {
-          result.fp32[i] = v1.fp32[i] + v2.fp32[i];
+  const executeInstruction = async (instruction: Darcy128Instruction) => {
+    try {
+      setIsLoading(true);
+      
+      // Convert instruction to hex format for backend
+      const instructionHex = Darcy128ApiService.instructionToHex(instruction.instruction);
+      
+      const response = await apiService.executeInstruction(instructionHex);
+      
+      if (response.success) {
+        setCpuState(response.cpu_state);
+        setExecutionHistory(response.execution_history);
+        if (response.performance_metrics) {
+          setPerformanceMetrics(response.performance_metrics);
         }
-        
-        newHistory.push(`SIMD FP32: ${instruction.instruction} -> 4x parallel FP32 addition`);
-        newMetrics.simdUtilization = Math.min(100, newMetrics.simdUtilization + 5);
-        break;
-        
-      case "vadd.f16":
-        // SIMD: 8x FP16 parallel addition
-        const vdest16 = instruction.operands[0];
-        const vsrc1_16 = instruction.operands[1];
-        const vsrc2_16 = instruction.operands[2];
-        
-        const v1_16 = newVectorRegisters[vsrc1_16];
-        const v2_16 = newVectorRegisters[vsrc2_16];
-        const result16 = newVectorRegisters[vdest16];
-        
-        for (let i = 0; i < 8; i++) {
-          result16.fp16[i] = v1_16.fp16[i] + v2_16.fp16[i];
-        }
-        
-        newHistory.push(`SIMD FP16: ${instruction.instruction} -> 8x parallel FP16 addition`);
-        newMetrics.simdUtilization = Math.min(100, newMetrics.simdUtilization + 8);
-        break;
-        
-      case "aes.encrypt":
-        // Native AES encryption
-        const cdest = instruction.operands[0];
-        const cdata = instruction.operands[1];
-        const ckey = instruction.operands[2];
-        
-        // Simulate AES encryption (simplified)
-        const data = newRegisters[cdata].value;
-        const key = newRegisters[ckey].value;
-        const encrypted = data ^ key; // Simplified XOR for demo
-        
-        newRegisters[cdest].value = encrypted;
-        newHistory.push(`AES: ${instruction.instruction} -> Native 128-bit encryption`);
-        newMetrics.cryptoAcceleration = Math.min(500, newMetrics.cryptoAcceleration + 10);
-        break;
-        
-      case "qadd":
-        // Quad-precision floating point addition
-        const qdest = instruction.operands[0];
-        const qsrc1 = instruction.operands[1];
-        const qsrc2 = instruction.operands[2];
-        
-        // Simulate quad-precision (simplified)
-        newRegisters[qdest].value = newRegisters[qsrc1].value + newRegisters[qsrc2].value;
-        newHistory.push(`Quad-Precision: ${instruction.instruction} -> 113-bit mantissa precision`);
-        newMetrics.quadPrecisionOps++;
-        break;
-        
-      case "uuid.generate":
-        // Generate UUID
-        const uuidReg = instruction.operands[0];
-        const uuid = BigInt(Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)) << 64n | BigInt(Math.floor(Math.random() * Number.MAX_SAFE_INTEGER));
-        newRegisters[uuidReg].value = uuid;
-        newHistory.push(`UUID: ${instruction.instruction} -> Generated 128-bit UUID`);
-        break;
-        
-      case "ipv6.compare":
-        // IPv6 comparison
-        const ip1 = instruction.operands[0];
-        const ip2 = instruction.operands[1];
-        const equal = newRegisters[ip1].value === newRegisters[ip2].value;
-        newHistory.push(`IPv6: ${instruction.instruction} -> Addresses ${equal ? 'equal' : 'different'}`);
-        break;
-        
-      case "matmul.f32":
-        // Matrix multiplication for AI/ML
-        const mdest = instruction.operands[0];
-        const msrc1 = instruction.operands[1];
-        const msrc2 = instruction.operands[2];
-        
-        // Simulate 4x4 matrix multiplication
-        newRegisters[mdest].value = newRegisters[msrc1].value + newRegisters[msrc2].value;
-        newHistory.push(`AI/ML: ${instruction.instruction} -> 4x4 FP32 matrix multiplication`);
-        newMetrics.simdUtilization = Math.min(100, newMetrics.simdUtilization + 15);
-        break;
-        
-      default:
-        newHistory.push(`Unknown instruction: ${instruction.instruction}`);
+      } else {
+        console.error('Execution failed:', response.error);
+        setExecutionHistory(prev => [...prev, `Error: ${response.error}`]);
+      }
+    } catch (error) {
+      console.error('Failed to execute instruction:', error);
+      setExecutionHistory(prev => [...prev, `Error: ${error instanceof Error ? error.message : 'Unknown error'}`]);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setRegisters(newRegisters);
-    setVectorRegisters(newVectorRegisters);
-    setExecutionHistory(newHistory);
-    setMetrics(newMetrics);
   };
 
-  const stepForward = () => {
+  const stepForward = async () => {
     if (currentInstructionIndex < instructions.length - 1) {
       const nextIndex = currentInstructionIndex + 1;
       setCurrentInstructionIndex(nextIndex);
-      executeInstruction(instructions[nextIndex]);
+      await executeInstruction(instructions[nextIndex]);
     }
   };
 
@@ -456,53 +349,35 @@ export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps)
     }
   };
 
-  const reset = () => {
-    setCurrentInstructionIndex(0);
-    setRegisters({
-      "$q0": { name: "$q0", value: 0n, type: "general", width: 128 },
-      "$q1": { name: "$q1", value: 0n, type: "general", width: 128 },
-      "$q2": { name: "$q2", value: 0n, type: "general", width: 128 },
-      "$q3": { name: "$q3", value: 0n, type: "general", width: 128 },
-      "$v0": { name: "$v0", value: 0n, type: "vector", width: 128 },
-      "$v1": { name: "$v1", value: 0n, type: "vector", width: 128 },
-      "$v2": { name: "$v2", value: 0n, type: "vector", width: 128 },
-      "$v3": { name: "$v3", value: 0n, type: "vector", width: 128 },
-      "$c0": { name: "$c0", value: 0n, type: "crypto", width: 128 },
-      "$c1": { name: "$c1", value: 0n, type: "crypto", width: 128 },
-      "$c2": { name: "$c2", value: 0n, type: "crypto", width: 128 },
-      "$qf0": { name: "$qf0", value: 0n, type: "general", width: 128 },
-      "$qf1": { name: "$qf1", value: 0n, type: "general", width: 128 },
-      "$qf2": { name: "$qf2", value: 0n, type: "general", width: 128 },
-      "$u0": { name: "$u0", value: 0n, type: "general", width: 128 },
-      "$ip0": { name: "$ip0", value: 0n, type: "general", width: 128 },
-      "$ip1": { name: "$ip1", value: 0n, type: "general", width: 128 },
-      "$m0": { name: "$m0", value: 0n, type: "vector", width: 128 },
-      "$m1": { name: "$m1", value: 0n, type: "vector", width: 128 },
-      "$m2": { name: "$m2", value: 0n, type: "vector", width: 128 },
-      "$zero": { name: "$zero", value: 0n, type: "general", width: 128 },
-      "$t0": { name: "$t0", value: 0n, type: "general", width: 128 },
-      "$t1": { name: "$t1", value: 0n, type: "general", width: 128 },
-    });
-    setExecutionHistory([]);
-    setMetrics({
-      instructionsPerCycle: 4.0,
-      simdUtilization: 0,
-      cryptoAcceleration: 0,
-      quadPrecisionOps: 0,
-      memoryBandwidthUtilization: 0
-    });
+  const reset = async () => {
+    try {
+      setIsLoading(true);
+      const response = await apiService.reset();
+      if (response.success) {
+        setCpuState(response.cpu_state);
+        setExecutionHistory(response.execution_history);
+        if (response.performance_metrics) {
+          setPerformanceMetrics(response.performance_metrics);
+        }
+        setCurrentInstructionIndex(0);
+      }
+    } catch (error) {
+      console.error('Failed to reset CPU:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const runAll = () => {
+  const runAll = async () => {
     setIsRunning(true);
     setIsPaused(false);
     
-    const runStep = () => {
+    const runStep = async () => {
       if (currentInstructionIndex < instructions.length - 1 && !isPaused) {
+        await stepForward();
         setTimeout(() => {
-          stepForward();
           runStep();
-        }, 1200); // Slightly slower to appreciate the 128-bit operations
+        }, 1000); // 1 second delay between steps
       } else {
         setIsRunning(false);
       }
@@ -514,6 +389,30 @@ export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps)
   const pause = () => {
     setIsPaused(true);
     setIsRunning(false);
+  };
+
+  const loadSampleProgram = async (programName: string) => {
+    try {
+      setIsLoading(true);
+      const samplePrograms = Darcy128ApiService.getSamplePrograms();
+      const program = samplePrograms.find(p => p.name === programName);
+      
+      if (program) {
+        const response = await apiService.loadProgram(program.program);
+        if (response.success) {
+          setCpuState(response.cpu_state);
+          setExecutionHistory(response.execution_history);
+          if (response.performance_metrics) {
+            setPerformanceMetrics(response.performance_metrics);
+          }
+          setCurrentInstructionIndex(0);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load program:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -656,18 +555,36 @@ export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps)
         
         <button
           onClick={reset}
+          disabled={isLoading}
           style={{
             padding: "10px 18px",
-            background: "#f44336",
+            background: isLoading ? "#333" : "#f44336",
             color: "white",
             border: "none",
             borderRadius: "6px",
-            cursor: "pointer",
+            cursor: isLoading ? "not-allowed" : "pointer",
             fontSize: "12px",
             fontWeight: "bold"
           }}
         >
           🔄 Reset
+        </button>
+        
+        <button
+          onClick={() => loadSampleProgram('Simple Addition')}
+          disabled={isLoading}
+          style={{
+            padding: "10px 18px",
+            background: isLoading ? "#333" : "#9c27b0",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: isLoading ? "not-allowed" : "pointer",
+            fontSize: "12px",
+            fontWeight: "bold"
+          }}
+        >
+          📝 Load Sample
         </button>
       </div>
       
