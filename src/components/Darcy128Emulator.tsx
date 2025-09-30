@@ -44,6 +44,7 @@ export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps)
   const [selectedCommand, setSelectedCommand] = useState<CommandTemplate | null>(null);
   const [commandParams, setCommandParams] = useState<{ [key: string]: string }>({});
   const [stateService] = useState(() => new Darcy128StateService());
+  const [currentMode, setCurrentMode] = useState<'commands' | 'terminal' | 'cpu'>('commands');
 
   // Initialize CPU
   useEffect(() => {
@@ -609,166 +610,317 @@ export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps)
             </div>
           </div>
 
+          {/* Mode Tabs */}
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+            <button
+              onClick={() => setCurrentMode('commands')}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: currentMode === 'commands' ? '#0066ff' : '#333',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              🎮 Commands
+            </button>
+            <button
+              onClick={() => setCurrentMode('terminal')}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: currentMode === 'terminal' ? '#0066ff' : '#333',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              💻 Terminal
+            </button>
+            <button
+              onClick={() => setCurrentMode('cpu')}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: currentMode === 'cpu' ? '#0066ff' : '#333',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              🖥️ CPU State
+            </button>
+          </div>
+
           {/* Main Content Area */}
-          <div style={{ display: 'flex', gap: '20px', height: 'calc(100% - 100px)' }}>
-            {/* Visual Programming Canvas */}
-            <div style={{ flex: 1, backgroundColor: '#1a1a1a', borderRadius: '10px', padding: '20px' }}>
-              <h3 style={{ color: '#00ff00', marginTop: 0, marginBottom: '20px' }}>Instruction Canvas</h3>
+          <div style={{ display: 'flex', gap: '20px', height: 'calc(100% - 140px)' }}>
+            {/* Left Panel - Canvas */}
+            <div style={{ flex: 1, minWidth: '400px', position: 'relative', backgroundColor: '#1a1a1a', borderRadius: '10px', border: '2px solid #00ffff', overflow: 'hidden' }}>
               <canvas
                 ref={canvasRef}
-                style={{
-                  border: '2px solid #00ffff',
-                  borderRadius: '10px',
-                  backgroundColor: '#f0f0f0',
-                  width: '100%',
-                  height: '400px'
+                style={{ width: '100%', height: '100%', cursor: 'grab' }}
+                onMouseDown={(e) => {
+                  const rect = canvasRef.current?.getBoundingClientRect();
+                  if (rect) {
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    // Handle canvas interactions here
+                  }
                 }}
               />
+              
+              {/* Instruction Blocks Overlay */}
+              {instructionBlocks.map((block, index) => (
+                <div
+                  key={block.id}
+                  style={{
+                    position: 'absolute',
+                    left: block.x,
+                    top: block.y,
+                    backgroundColor: block.isExecuting ? '#ff4444' : '#0066ff',
+                    color: '#fff',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '2px solid #00ffff',
+                    cursor: 'pointer',
+                    minWidth: '120px',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+                    zIndex: 10
+                  }}
+                >
+                  <div style={{ marginBottom: '5px' }}>
+                    {block.type.toUpperCase()}
+                  </div>
+                  <div style={{ fontSize: '10px', opacity: 0.8 }}>
+                    {Object.entries(block.params).map(([key, value]) => (
+                      <div key={key}>{key}: {value}</div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: '10px', marginTop: '5px', fontFamily: 'monospace' }}>
+                    {block.hexCode}
+                  </div>
+                </div>
+              ))}
             </div>
             
-            {/* Command Builder Panel */}
-            <div style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {/* Command Builder */}
-              <div style={{ backgroundColor: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '2px solid #00ff00' }}>
-                <h3 style={{ color: '#00ff00', marginTop: 0 }}>Command Builder</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
-                  {commandTemplates.map((command, index) => (
-                    <button
-                      key={index}
-                      onClick={() => openCommandBuilder(command)}
-                      style={{
-                        padding: '10px',
-                        backgroundColor: '#0066ff',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        fontWeight: 'bold'
-                      }}
-                    >
-                      {command.name}
-                    </button>
-                  ))}
-                </div>
-                <div style={{ marginTop: '10px', fontSize: '12px', color: '#888' }}>
-                  Click a command to add it to your program
-                </div>
-              </div>
-
-              {/* Register Editor */}
-              <div style={{ backgroundColor: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '2px solid #00ff00' }}>
-                <h3 style={{ color: '#00ff00', marginTop: 0 }}>Registers</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
-                  {cpuState?.registers.slice(0, 8).map((reg, index) => (
-                    <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                      <label style={{ fontSize: '12px', color: '#ccc' }}>{reg.name}</label>
-                      <div style={{ display: 'flex', gap: '5px' }}>
-                        <input
-                          type="text"
-                          value={reg.value}
-                          readOnly
-                          style={{
-                            flex: 1,
-                            padding: '5px',
-                            backgroundColor: '#333',
-                            color: '#fff',
-                            border: '1px solid #555',
-                            borderRadius: '3px',
-                            fontSize: '10px'
-                          }}
-                        />
+            {/* Right Panel - Mode Content */}
+            <div style={{ width: '400px', display: 'flex', flexDirection: 'column' }}>
+              {/* Commands Mode */}
+              {currentMode === 'commands' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%' }}>
+                  {/* Command Builder */}
+                  <div style={{ backgroundColor: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '2px solid #00ff00', flex: 1 }}>
+                    <h3 style={{ color: '#00ff00', marginTop: 0 }}>Command Builder</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
+                      {commandTemplates.map((command, index) => (
                         <button
-                          onClick={() => editRegister(index)}
-                          disabled={isRunning}
+                          key={index}
+                          onClick={() => openCommandBuilder(command)}
                           style={{
-                            padding: '5px 10px',
-                            backgroundColor: isRunning ? '#666' : '#0066ff',
+                            padding: '10px',
+                            backgroundColor: '#0066ff',
                             color: '#fff',
                             border: 'none',
-                            borderRadius: '3px',
-                            cursor: isRunning ? 'not-allowed' : 'pointer',
-                            fontSize: '10px'
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: 'bold'
                           }}
                         >
-                          Edit
+                          {command.name}
                         </button>
+                      ))}
+                    </div>
+                    <div style={{ marginTop: '10px', fontSize: '12px', color: '#888' }}>
+                      Click a command to add it to your program
+                    </div>
+                  </div>
+
+                  {/* Register Editor */}
+                  <div style={{ backgroundColor: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '2px solid #00ff00' }}>
+                    <h3 style={{ color: '#00ff00', marginTop: 0 }}>Registers</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
+                      {cpuState?.registers.slice(0, 8).map((reg, index) => (
+                        <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                          <label style={{ fontSize: '12px', color: '#ccc' }}>{reg.name}</label>
+                          <div style={{ display: 'flex', gap: '5px' }}>
+                            <input
+                              type="text"
+                              value={reg.value}
+                              readOnly
+                              style={{
+                                flex: 1,
+                                padding: '5px',
+                                backgroundColor: '#333',
+                                color: '#fff',
+                                border: '1px solid #555',
+                                borderRadius: '3px',
+                                fontSize: '10px'
+                              }}
+                            />
+                            <button
+                              onClick={() => editRegister(index)}
+                              disabled={isRunning}
+                              style={{
+                                padding: '5px 10px',
+                                backgroundColor: isRunning ? '#666' : '#0066ff',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '3px',
+                                cursor: isRunning ? 'not-allowed' : 'pointer',
+                                fontSize: '10px'
+                              }}
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Terminal Mode */}
+              {currentMode === 'terminal' && (
+                <div style={{ 
+                  backgroundColor: '#1a1a1a', 
+                  borderRadius: '10px', 
+                  border: '2px solid #00ff00',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}>
+                  <div style={{ 
+                    padding: '15px', 
+                    borderBottom: '1px solid #333',
+                    backgroundColor: '#0a0a0a'
+                  }}>
+                    <h3 style={{ color: '#00ff00', margin: 0 }}>Execution Terminal</h3>
+                  </div>
+                  <div style={{ 
+                    flex: 1,
+                    padding: '15px',
+                    overflowY: 'auto',
+                    fontFamily: 'monospace',
+                    fontSize: '12px',
+                    color: '#00ff00',
+                    backgroundColor: '#000'
+                  }}>
+                    {executionHistory.map((entry, index) => (
+                      <div key={index} style={{ marginBottom: '5px' }}>
+                        <span style={{ color: '#888' }}>[{new Date().toLocaleTimeString()}]</span> {entry}
+                      </div>
+                    ))}
+                    {executionHistory.length === 0 && (
+                      <div style={{ color: '#666', fontStyle: 'italic' }}>
+                        No execution history yet. Run some instructions to see output here.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* CPU State Mode */}
+              {currentMode === 'cpu' && (
+                <div style={{ 
+                  backgroundColor: '#1a1a1a', 
+                  borderRadius: '10px', 
+                  border: '2px solid #00ff00',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}>
+                  <div style={{ 
+                    padding: '15px', 
+                    borderBottom: '1px solid #333',
+                    backgroundColor: '#0a0a0a'
+                  }}>
+                    <h3 style={{ color: '#00ff00', margin: 0 }}>CPU State</h3>
+                  </div>
+                  <div style={{ 
+                    flex: 1,
+                    padding: '15px',
+                    overflowY: 'auto',
+                    fontSize: '12px',
+                    color: '#ccc'
+                  }}>
+                    {/* All Registers */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <h4 style={{ color: '#00ffff', marginBottom: '10px' }}>Registers</h4>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        {cpuState?.registers.map((reg, index) => (
+                          <div key={index} style={{ 
+                            padding: '8px', 
+                            backgroundColor: 'rgba(0, 0, 0, 0.3)', 
+                            borderRadius: '5px',
+                            border: '1px solid #333'
+                          }}>
+                            <div style={{ fontWeight: 'bold', color: '#00ff00' }}>{reg.name}</div>
+                            <div style={{ fontFamily: 'monospace', fontSize: '11px' }}>{reg.value}</div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
 
-              {/* Status Panel */}
-              <div style={{ backgroundColor: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '2px solid #00ff00' }}>
-                <h3 style={{ color: '#00ff00', marginTop: 0 }}>Status</h3>
-                <div style={{ fontSize: '12px', color: '#ccc' }}>
-                  <p><strong>Current Step:</strong> {currentInstructionIndex + 1} / {instructionBlocks.length}</p>
-                  <p><strong>Status:</strong> {isRunning ? 'Running' : isLoading ? 'Processing...' : 'Ready'}</p>
-                  <p><strong>PC:</strong> {cpuState?.pc}</p>
-                  <p><strong>Instructions Executed:</strong> {performanceMetrics?.instructions_executed || 0}</p>
-                  <p><strong>Architecture:</strong> DARCY128 (128-bit)</p>
-                  <p><strong>Compatibility:</strong> MIPS32</p>
-                  <p><strong>Multiplication:</strong> Karatsuba</p>
-                  <p><strong>Division:</strong> Long Division</p>
+                    {/* Special Registers */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <h4 style={{ color: '#00ffff', marginBottom: '10px' }}>Special Registers</h4>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
+                        <div style={{ 
+                          padding: '8px', 
+                          backgroundColor: 'rgba(0, 0, 0, 0.3)', 
+                          borderRadius: '5px',
+                          border: '1px solid #333'
+                        }}>
+                          <div style={{ fontWeight: 'bold', color: '#00ff00' }}>PC (Program Counter)</div>
+                          <div style={{ fontFamily: 'monospace', fontSize: '11px' }}>0x{cpuState?.pc.toString(16).padStart(8, '0')}</div>
+                        </div>
+                        <div style={{ 
+                          padding: '8px', 
+                          backgroundColor: 'rgba(0, 0, 0, 0.3)', 
+                          borderRadius: '5px',
+                          border: '1px solid #333'
+                        }}>
+                          <div style={{ fontWeight: 'bold', color: '#00ff00' }}>HI (High)</div>
+                          <div style={{ fontFamily: 'monospace', fontSize: '11px' }}>{cpuState?.hi}</div>
+                        </div>
+                        <div style={{ 
+                          padding: '8px', 
+                          backgroundColor: 'rgba(0, 0, 0, 0.3)', 
+                          borderRadius: '5px',
+                          border: '1px solid #333'
+                        }}>
+                          <div style={{ fontWeight: 'bold', color: '#00ff00' }}>LO (Low)</div>
+                          <div style={{ fontFamily: 'monospace', fontSize: '11px' }}>{cpuState?.lo}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Session Info */}
+                    <div>
+                      <h4 style={{ color: '#00ffff', marginBottom: '10px' }}>Session Info</h4>
+                      <div style={{ fontSize: '11px', lineHeight: '1.5' }}>
+                        <div><strong>Architecture:</strong> DARCY128</div>
+                        <div><strong>Mode:</strong> 128-bit Native</div>
+                        <div><strong>Instructions:</strong> {instructionBlocks.length}</div>
+                        <div><strong>Status:</strong> {isRunning ? 'Running' : 'Ready'}</div>
+                        <div><strong>Current Step:</strong> {currentInstructionIndex + 1}</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Terminal */}
-        <div style={{
-          height: terminalExpanded ? `${terminalHeight}px` : '40px',
-          backgroundColor: '#1e1e1e',
-          borderTop: '2px solid #00ff00',
-          transition: 'height 0.3s ease',
-          overflow: 'hidden'
-        }}>
-          {/* Terminal Header */}
-          <div style={{
-            height: '40px',
-            backgroundColor: '#2d2d2d',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 15px',
-            cursor: 'pointer',
-            borderBottom: terminalExpanded ? '1px solid #444' : 'none'
-          }} onClick={() => setTerminalExpanded(!terminalExpanded)}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ color: '#00ff00', fontWeight: 'bold' }}>Terminal</span>
-              <span style={{ color: '#888', fontSize: '12px' }}>
-                {executionHistory.length} messages
-              </span>
-            </div>
-            <div style={{ color: '#00ff00', fontSize: '18px' }}>
-              {terminalExpanded ? '▼' : '▲'}
-            </div>
-          </div>
-
-          {/* Terminal Content */}
-          {terminalExpanded && (
-            <div style={{
-              height: `calc(100% - 40px)`,
-              overflow: 'auto',
-              padding: '10px',
-              fontFamily: 'monospace',
-              fontSize: '12px',
-              color: '#00ff00',
-              backgroundColor: '#1e1e1e'
-            }}>
-              {executionHistory.length === 0 ? (
-                <div style={{ color: '#888' }}>No execution history yet...</div>
-              ) : (
-                executionHistory.map((entry, index) => (
-                  <div key={index} style={{ marginBottom: '5px' }}>
-                    {entry}
-                  </div>
-                ))
-              )}
-            </div>
-          )}
         </div>
       </div>
 

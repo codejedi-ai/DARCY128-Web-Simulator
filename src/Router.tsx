@@ -2,7 +2,7 @@ import { useState, useEffect } from 'preact/hooks';
 import App from './App';
 import FeaturesPage from './pages/pages/features';
 import MipsEmulator from './components/MipsEmulator';
-import Darcy128Emulator from './components/Darcy128Emulator';
+import Darcy128CodeViewer from './components/Darcy128CodeViewer';
 import Darcy128TestSuite from './components/Darcy128TestSuite';
 
 export default function Router() {
@@ -34,7 +34,7 @@ export default function Router() {
 
   // Route to Darcy128 emulator (revolutionary 128-bit processor)
   if (currentPath === '/darcy128' || currentPath === '/darcy128-emulator') {
-    return <Darcy128Emulator screenWidth={window.innerWidth} />;
+    return <Darcy128CodeViewer />;
   }
 
   // Route to Darcy128 Test Suite
