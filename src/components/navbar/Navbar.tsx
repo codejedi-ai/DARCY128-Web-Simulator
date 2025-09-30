@@ -27,6 +27,7 @@ const Navbar = ({ screenWidth }: NavbarProps = {}) => {
     { path: '/features', label: 'Features' },
     { path: '/demo', label: 'Canvas' },
     { path: '/darcy128', label: '🚀 DARCY128' },
+    { path: '/tests', label: '🧪 Tests' },
     { path: '/mips', label: 'MIPS32 (Legacy)' },
   ];
 
