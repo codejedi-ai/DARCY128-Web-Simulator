@@ -55,7 +55,7 @@ export class Darcy128ApiService {
       : '/.netlify/functions';
   }
 
-  private async makeRequest(endpoint: string, method: 'GET' | 'POST' = 'GET', body?: any): Promise<EmulatorResponse> {
+  private async makeRequest(endpoint: string, method: 'GET' | 'POST' = 'GET', body?: any): Promise<any> {
     try {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         method,
@@ -77,39 +77,50 @@ export class Darcy128ApiService {
     }
   }
 
-  // Get current CPU state
-  async getStatus(): Promise<EmulatorResponse> {
-    return this.makeRequest('/darcy128-emulator');
-  }
-
-  // Reset the CPU
-  async reset(): Promise<EmulatorResponse> {
-    return this.makeRequest('/darcy128-emulator', 'POST', {
-      action: 'reset'
-    });
-  }
-
-  // Execute a single instruction
-  async executeInstruction(instruction: string): Promise<EmulatorResponse> {
-    return this.makeRequest('/darcy128-emulator', 'POST', {
-      action: 'execute',
+  // Advance instruction - execute next instruction or specific instruction
+  async advanceInstruction(instruction?: string): Promise<EmulatorResponse> {
+    return this.makeRequest('/advance-instruction', 'POST', {
       instruction: instruction
     });
   }
 
-  // Step through one instruction
-  async step(): Promise<EmulatorResponse> {
-    return this.makeRequest('/darcy128-emulator', 'POST', {
-      action: 'step'
-    });
+  // Reset the processor
+  async resetProcessor(): Promise<EmulatorResponse> {
+    return this.makeRequest('/reset-processor', 'POST');
   }
 
-  // Load a program into memory
-  async loadProgram(program: string[]): Promise<EmulatorResponse> {
-    return this.makeRequest('/darcy128-emulator', 'POST', {
-      action: 'load_program',
-      program: program
-    });
+  // Query memory contents
+  async queryMemory(startAddress?: number, length?: number, singleAddress?: number): Promise<any> {
+    if (singleAddress !== undefined) {
+      return this.makeRequest(`/query-memory?address=${singleAddress.toString(16)}`, 'GET');
+    } else {
+      const params = new URLSearchParams();
+      if (startAddress !== undefined) params.append('start', startAddress.toString(16));
+      if (length !== undefined) params.append('length', length.toString());
+      return this.makeRequest(`/query-memory?${params.toString()}`, 'GET');
+    }
+  }
+
+  // Health check
+  async healthCheck(): Promise<any> {
+    return this.makeRequest('/health-check', 'GET');
+  }
+
+  // Legacy methods for backward compatibility
+  async getStatus(): Promise<EmulatorResponse> {
+    return this.advanceInstruction();
+  }
+
+  async reset(): Promise<EmulatorResponse> {
+    return this.resetProcessor();
+  }
+
+  async executeInstruction(instruction: string): Promise<EmulatorResponse> {
+    return this.advanceInstruction(instruction);
+  }
+
+  async step(): Promise<EmulatorResponse> {
+    return this.advanceInstruction();
   }
 
   // Helper method to convert instruction to hex

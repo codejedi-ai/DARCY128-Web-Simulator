@@ -1,5 +1,5 @@
-// DARCY128 Revolutionary 128-bit Processor Emulator
-// Netlify Backend Implementation
+// DARCY128 Advance Instruction Endpoint
+// Executes a single instruction and returns updated CPU state
 
 import { Handler } from '@netlify/functions';
 
@@ -22,34 +22,21 @@ interface Darcy128CPUState {
   memory: { [address: string]: string };
 }
 
-interface Darcy128Instruction {
-  address: string;
-  instruction: string;
-  opcode: string;
-  operands: string[];
-  description: string;
-  category: 'arithmetic' | 'memory' | 'control' | 'logical';
-  width: 32 | 64 | 128;
+interface AdvanceInstructionRequest {
+  instruction?: string; // Optional: specific instruction to execute
 }
 
-interface EmulatorRequest {
-  action: 'execute' | 'step' | 'reset' | 'status' | 'load_program';
-  instruction?: string;
-  program?: string[];
-  cpu_state?: Darcy128CPUState;
-}
-
-interface EmulatorResponse {
+interface AdvanceInstructionResponse {
   success: boolean;
   cpu_state: Darcy128CPUState;
   execution_history: string[];
-  error?: string;
-  performance_metrics?: {
+  performance_metrics: {
     instructions_executed: number;
     simd_utilization: number;
     crypto_acceleration: number;
     memory_bandwidth: number;
   };
+  error?: string;
 }
 
 // ============================================================================
@@ -57,8 +44,6 @@ interface EmulatorResponse {
 // ============================================================================
 
 class Int128 {
-  private static readonly MAX_SAFE_INTEGER = BigInt(Number.MAX_SAFE_INTEGER);
-  
   static fromString(value: string): bigint {
     if (value.startsWith('0x')) {
       return BigInt(value);
@@ -79,10 +64,8 @@ class Int128 {
   }
   
   static mul(a: bigint, b: bigint): { hi: bigint; lo: bigint } {
-    // Simplified 128-bit multiplication
-    // In a real implementation, this would handle 256-bit results
     const result = a * b;
-    const mask = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'); // 128-bit mask
+    const mask = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
     return {
       lo: result & mask,
       hi: (result >> BigInt(128)) & mask
@@ -106,7 +89,6 @@ class Int128 {
   }
   
   static signExtend16(value: number): bigint {
-    // Sign extend 16-bit immediate to 128-bit
     const signBit = (value >> 15) & 1;
     if (signBit) {
       return BigInt(value) | BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000');
@@ -116,20 +98,18 @@ class Int128 {
 }
 
 // ============================================================================
-// Memory System - 128-bit words
+// Memory System
 // ============================================================================
 
 class Darcy128Memory {
   private memory: { [address: string]: bigint } = {};
   private readonly MEMORY_SIZE = 8 * 1024 * 1024; // 8MB
   
-  // Memory-mapped I/O addresses
   private static readonly MMIO_OUTPUT_QWORD = 0xffff0018;
   private static readonly MMIO_INPUT_QWORD = 0xffff0010;
   
   loadWord(address: number): bigint {
     if (address === Darcy128Memory.MMIO_INPUT_QWORD) {
-      // Simulate input - return a random 128-bit value
       return BigInt('0x' + Math.random().toString(16).substring(2).repeat(8).substring(0, 32));
     }
     
@@ -142,7 +122,6 @@ class Darcy128Memory {
   
   storeWord(address: number, value: bigint): void {
     if (address === Darcy128Memory.MMIO_OUTPUT_QWORD) {
-      // Simulate output - just store in memory for now
       console.log(`Output: ${Int128.toString(value)}`);
       return;
     }
@@ -158,13 +137,12 @@ class Darcy128Memory {
     this.checkAddress(address, 4);
     this.checkAlignment(address, 4);
     
-    // Instructions are 32-bit but stored in 128-bit memory words
     const word = this.loadWord(address);
     return Number(word & BigInt(0xFFFFFFFF));
   }
   
   private checkAddress(address: number, size: number): void {
-    if (address >= 0xffff0000) return; // MMIO addresses are valid
+    if (address >= 0xffff0000) return;
     if (address + size > this.MEMORY_SIZE) {
       throw new Error(`Memory access out of bounds: 0x${address.toString(16)}`);
     }
@@ -189,7 +167,7 @@ class Darcy128Memory {
 }
 
 // ============================================================================
-// CPU Core - 128-bit registers
+// CPU Core
 // ============================================================================
 
 class Darcy128CPU {
@@ -217,13 +195,13 @@ class Darcy128CPU {
   }
   
   readReg(reg: number): bigint {
-    if (reg === 0) return BigInt(0); // $0 is always zero
+    if (reg === 0) return BigInt(0);
     if (reg >= 32) throw new Error('Invalid register');
     return this.registers[reg];
   }
   
   writeReg(reg: number, value: bigint): void {
-    if (reg === 0) return; // Can't write to $0
+    if (reg === 0) return;
     if (reg >= 32) throw new Error('Invalid register');
     this.registers[reg] = value;
   }
@@ -244,7 +222,7 @@ class Darcy128CPU {
   
   fetch(): number {
     const instruction = this.memory.fetchInstruction(Number(this.pc));
-    this.pc += BigInt(4); // Instructions are 32-bit
+    this.pc += BigInt(4);
     return instruction;
   }
   
@@ -257,7 +235,7 @@ class Darcy128CPU {
   private decodeInstruction(word: number): Instruction {
     const opcode = (word >> 26) & 0x3F;
     
-    if (opcode === 0x00) { // R-type
+    if (opcode === 0x00) {
       const func = word & 0x3F;
       switch (func) {
         case 0x20: return new AddInstruction(word);
@@ -276,7 +254,7 @@ class Darcy128CPU {
         default:
           throw new Error(`Unknown R-type function: 0x${func.toString(16)}`);
       }
-    } else { // I-type
+    } else {
       switch (opcode) {
         case 0x23: return new LwInstruction(word);
         case 0x2B: return new SwInstruction(word);
@@ -291,7 +269,7 @@ class Darcy128CPU {
   addExecutionHistory(entry: string): void {
     this.executionHistory.push(entry);
     if (this.executionHistory.length > 100) {
-      this.executionHistory.shift(); // Keep only last 100 entries
+      this.executionHistory.shift();
     }
   }
   
@@ -311,7 +289,7 @@ class Darcy128CPU {
       hi: Int128.toString(this.hi),
       lo: Int128.toString(this.lo),
       running: this.running,
-      memory: this.memory.dump(0, 256) // Dump first 256 bytes
+      memory: this.memory.dump(0, 256)
     };
   }
   
@@ -330,7 +308,7 @@ class Darcy128CPU {
 }
 
 // ============================================================================
-// Instruction Classes
+// Instruction Classes (Simplified)
 // ============================================================================
 
 abstract class Instruction {
@@ -353,7 +331,6 @@ abstract class Instruction {
   protected getAddress(): number { return this.raw & 0x3FFFFFF; }
 }
 
-// R-Type Instructions
 class AddInstruction extends Instruction {
   execute(cpu: Darcy128CPU): void {
     const s = cpu.readReg(this.getRs());
@@ -362,7 +339,6 @@ class AddInstruction extends Instruction {
     cpu.writeReg(this.getRd(), result);
     cpu.addExecutionHistory(`add $${this.getRd()}, $${this.getRs()}, $${this.getRt()} -> ${Int128.toString(result)}`);
   }
-  
   getName(): string { return 'add'; }
 }
 
@@ -374,7 +350,6 @@ class SubInstruction extends Instruction {
     cpu.writeReg(this.getRd(), result);
     cpu.addExecutionHistory(`sub $${this.getRd()}, $${this.getRs()}, $${this.getRt()} -> ${Int128.toString(result)}`);
   }
-  
   getName(): string { return 'sub'; }
 }
 
@@ -387,7 +362,6 @@ class MultInstruction extends Instruction {
     cpu.setHI(result.hi);
     cpu.addExecutionHistory(`mult $${this.getRs()}, $${this.getRt()} -> HI:LO = ${Int128.toString(result.hi)}:${Int128.toString(result.lo)}`);
   }
-  
   getName(): string { return 'mult'; }
 }
 
@@ -395,12 +369,11 @@ class MultuInstruction extends Instruction {
   execute(cpu: Darcy128CPU): void {
     const s = cpu.readReg(this.getRs());
     const t = cpu.readReg(this.getRt());
-    const result = Int128.mul(s, t); // Simplified - treat as unsigned
+    const result = Int128.mul(s, t);
     cpu.setLO(result.lo);
     cpu.setHI(result.hi);
     cpu.addExecutionHistory(`multu $${this.getRs()}, $${this.getRt()} -> HI:LO = ${Int128.toString(result.hi)}:${Int128.toString(result.lo)}`);
   }
-  
   getName(): string { return 'multu'; }
 }
 
@@ -413,7 +386,6 @@ class DivInstruction extends Instruction {
     cpu.setHI(result.remainder);
     cpu.addExecutionHistory(`div $${this.getRs()}, $${this.getRt()} -> LO=${Int128.toString(result.quotient)}, HI=${Int128.toString(result.remainder)}`);
   }
-  
   getName(): string { return 'div'; }
 }
 
@@ -421,12 +393,11 @@ class DivuInstruction extends Instruction {
   execute(cpu: Darcy128CPU): void {
     const s = cpu.readReg(this.getRs());
     const t = cpu.readReg(this.getRt());
-    const result = Int128.div(s, t); // Simplified - treat as unsigned
+    const result = Int128.div(s, t);
     cpu.setLO(result.quotient);
     cpu.setHI(result.remainder);
     cpu.addExecutionHistory(`divu $${this.getRs()}, $${this.getRt()} -> LO=${Int128.toString(result.quotient)}, HI=${Int128.toString(result.remainder)}`);
   }
-  
   getName(): string { return 'divu'; }
 }
 
@@ -436,7 +407,6 @@ class MfhiInstruction extends Instruction {
     cpu.writeReg(this.getRd(), hi);
     cpu.addExecutionHistory(`mfhi $${this.getRd()} -> ${Int128.toString(hi)}`);
   }
-  
   getName(): string { return 'mfhi'; }
 }
 
@@ -446,7 +416,6 @@ class MfloInstruction extends Instruction {
     cpu.writeReg(this.getRd(), lo);
     cpu.addExecutionHistory(`mflo $${this.getRd()} -> ${Int128.toString(lo)}`);
   }
-  
   getName(): string { return 'mflo'; }
 }
 
@@ -458,7 +427,6 @@ class LisInstruction extends Instruction {
     cpu.writeReg(this.getRd(), value);
     cpu.addExecutionHistory(`lis $${this.getRd()} -> ${Int128.toString(value)}`);
   }
-  
   getName(): string { return 'lis'; }
 }
 
@@ -468,18 +436,16 @@ class JrInstruction extends Instruction {
     cpu.setPC(target);
     cpu.addExecutionHistory(`jr $${this.getRs()} -> PC = ${Int128.toString(target)}`);
   }
-  
   getName(): string { return 'jr'; }
 }
 
 class JalrInstruction extends Instruction {
   execute(cpu: Darcy128CPU): void {
     const target = cpu.readReg(this.getRs());
-    cpu.writeReg(31, cpu.getPC()); // Save return address
+    cpu.writeReg(31, cpu.getPC());
     cpu.setPC(target);
     cpu.addExecutionHistory(`jalr $${this.getRs()} -> PC = ${Int128.toString(target)}, $31 = ${Int128.toString(cpu.getPC())}`);
   }
-  
   getName(): string { return 'jalr'; }
 }
 
@@ -491,7 +457,6 @@ class SltInstruction extends Instruction {
     cpu.writeReg(this.getRd(), result);
     cpu.addExecutionHistory(`slt $${this.getRd()}, $${this.getRs()}, $${this.getRt()} -> ${result}`);
   }
-  
   getName(): string { return 'slt'; }
 }
 
@@ -499,15 +464,13 @@ class SltuInstruction extends Instruction {
   execute(cpu: Darcy128CPU): void {
     const s = cpu.readReg(this.getRs());
     const t = cpu.readReg(this.getRt());
-    const result = Int128.compare(s, t) < 0 ? BigInt(1) : BigInt(0); // Simplified unsigned comparison
+    const result = Int128.compare(s, t) < 0 ? BigInt(1) : BigInt(0);
     cpu.writeReg(this.getRd(), result);
     cpu.addExecutionHistory(`sltu $${this.getRd()}, $${this.getRs()}, $${this.getRt()} -> ${result}`);
   }
-  
   getName(): string { return 'sltu'; }
 }
 
-// I-Type Instructions
 class LwInstruction extends Instruction {
   execute(cpu: Darcy128CPU): void {
     const base = cpu.readReg(this.getRs());
@@ -518,7 +481,6 @@ class LwInstruction extends Instruction {
     cpu.writeReg(this.getRt(), value);
     cpu.addExecutionHistory(`lw $${this.getRt()}, ${this.getImmediate()}($${this.getRs()}) -> ${Int128.toString(value)}`);
   }
-  
   getName(): string { return 'lw'; }
 }
 
@@ -532,7 +494,6 @@ class SwInstruction extends Instruction {
     cpu.getMemory().storeWord(address, value);
     cpu.addExecutionHistory(`sw $${this.getRt()}, ${this.getImmediate()}($${this.getRs()}) -> Memory[${address}] = ${Int128.toString(value)}`);
   }
-  
   getName(): string { return 'sw'; }
 }
 
@@ -548,7 +509,6 @@ class BeqInstruction extends Instruction {
       cpu.addExecutionHistory(`beq $${this.getRs()}, $${this.getRt()}, ${this.getImmediate()} -> Branch not taken`);
     }
   }
-  
   getName(): string { return 'beq'; }
 }
 
@@ -564,7 +524,6 @@ class BneInstruction extends Instruction {
       cpu.addExecutionHistory(`bne $${this.getRs()}, $${this.getRt()}, ${this.getImmediate()} -> Branch not taken`);
     }
   }
-  
   getName(): string { return 'bne'; }
 }
 
@@ -586,7 +545,6 @@ function getCPU(): Darcy128CPU {
 // ============================================================================
 
 export const handler: Handler = async (event, context) => {
-  // Enable CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -600,129 +558,39 @@ export const handler: Handler = async (event, context) => {
 
   try {
     const cpu = getCPU();
-    let request: EmulatorRequest;
+    let request: AdvanceInstructionRequest = {};
 
-    if (event.httpMethod === 'GET') {
-      // Return current CPU state
-      const response: EmulatorResponse = {
+    if (event.httpMethod === 'POST') {
+      request = JSON.parse(event.body || '{}');
+    }
+
+    let response: AdvanceInstructionResponse;
+
+    try {
+      if (request.instruction) {
+        // Execute specific instruction
+        const instructionHex = parseInt(request.instruction, 16);
+        cpu.executeInstruction(instructionHex);
+      } else {
+        // Fetch and execute next instruction
+        const instruction = cpu.fetch();
+        cpu.executeInstruction(instruction);
+      }
+
+      response = {
         success: true,
         cpu_state: cpu.getState(),
         execution_history: cpu.getExecutionHistory(),
         performance_metrics: cpu.getPerformanceMetrics()
       };
-
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify(response)
+    } catch (error) {
+      response = {
+        success: false,
+        cpu_state: cpu.getState(),
+        execution_history: cpu.getExecutionHistory(),
+        performance_metrics: cpu.getPerformanceMetrics(),
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
-    }
-
-    if (event.httpMethod === 'POST') {
-      request = JSON.parse(event.body || '{}');
-    } else {
-      throw new Error('Invalid HTTP method');
-    }
-
-    let response: EmulatorResponse;
-
-    switch (request.action) {
-      case 'reset':
-        cpu.reset();
-        response = {
-          success: true,
-          cpu_state: cpu.getState(),
-          execution_history: cpu.getExecutionHistory(),
-          performance_metrics: cpu.getPerformanceMetrics()
-        };
-        break;
-
-      case 'step':
-        try {
-          const instruction = cpu.fetch();
-          cpu.executeInstruction(instruction);
-          response = {
-            success: true,
-            cpu_state: cpu.getState(),
-            execution_history: cpu.getExecutionHistory(),
-            performance_metrics: cpu.getPerformanceMetrics()
-          };
-        } catch (error) {
-          response = {
-            success: false,
-            cpu_state: cpu.getState(),
-            execution_history: cpu.getExecutionHistory(),
-            error: error instanceof Error ? error.message : 'Unknown error'
-          };
-        }
-        break;
-
-      case 'execute':
-        if (!request.instruction) {
-          throw new Error('No instruction provided');
-        }
-        
-        try {
-          // Parse instruction and execute
-          const instructionHex = parseInt(request.instruction, 16);
-          cpu.executeInstruction(instructionHex);
-          response = {
-            success: true,
-            cpu_state: cpu.getState(),
-            execution_history: cpu.getExecutionHistory(),
-            performance_metrics: cpu.getPerformanceMetrics()
-          };
-        } catch (error) {
-          response = {
-            success: false,
-            cpu_state: cpu.getState(),
-            execution_history: cpu.getExecutionHistory(),
-            error: error instanceof Error ? error.message : 'Unknown error'
-          };
-        }
-        break;
-
-      case 'load_program':
-        if (!request.program) {
-          throw new Error('No program provided');
-        }
-        
-        try {
-          cpu.reset();
-          // Load program into memory
-          for (let i = 0; i < request.program.length; i++) {
-            const instruction = parseInt(request.program[i], 16);
-            cpu.getMemory().storeWord(i * 16, BigInt(instruction)); // Store in 128-bit words
-          }
-          cpu.setPC(BigInt(0));
-          
-          response = {
-            success: true,
-            cpu_state: cpu.getState(),
-            execution_history: cpu.getExecutionHistory(),
-            performance_metrics: cpu.getPerformanceMetrics()
-          };
-        } catch (error) {
-          response = {
-            success: false,
-            cpu_state: cpu.getState(),
-            execution_history: cpu.getExecutionHistory(),
-            error: error instanceof Error ? error.message : 'Unknown error'
-          };
-        }
-        break;
-
-      case 'status':
-        response = {
-          success: true,
-          cpu_state: cpu.getState(),
-          execution_history: cpu.getExecutionHistory(),
-          performance_metrics: cpu.getPerformanceMetrics()
-        };
-        break;
-
-      default:
-        throw new Error(`Unknown action: ${request.action}`);
     }
 
     return {
@@ -732,10 +600,11 @@ export const handler: Handler = async (event, context) => {
     };
 
   } catch (error) {
-    const errorResponse: EmulatorResponse = {
+    const errorResponse: AdvanceInstructionResponse = {
       success: false,
       cpu_state: getCPU().getState(),
       execution_history: getCPU().getExecutionHistory(),
+      performance_metrics: getCPU().getPerformanceMetrics(),
       error: error instanceof Error ? error.message : 'Unknown error'
     };
 
