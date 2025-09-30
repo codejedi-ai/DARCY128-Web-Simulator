@@ -88,11 +88,53 @@ export class Int128 {
   }
   
   static mul(a: bigint, b: bigint): { hi: bigint; lo: bigint } {
-    const result = a * b;
-    const mask = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
+    // Karatsuba multiplication for 128-bit numbers
+    return Int128.karatsubaMultiply(a, b);
+  }
+  
+  static karatsubaMultiply(a: bigint, b: bigint): { hi: bigint; lo: bigint } {
+    // Handle negative numbers
+    const aSign = a < BigInt(0) ? -BigInt(1) : BigInt(1);
+    const bSign = b < BigInt(0) ? -BigInt(1) : BigInt(1);
+    const absA = a * aSign;
+    const absB = b * bSign;
+    
+    // Base case: if numbers are small enough, use regular multiplication
+    if (absA < BigInt(2) ** BigInt(64) && absB < BigInt(2) ** BigInt(64)) {
+      const result = absA * absB * aSign * bSign;
+      const mask = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
+      return {
+        lo: result & mask,
+        hi: (result >> BigInt(128)) & mask
+      };
+    }
+    
+    // Karatsuba algorithm
+    const n = BigInt(128);
+    const half = n / BigInt(2);
+    
+    // Split numbers into high and low parts
+    const mask = (BigInt(1) << half) - BigInt(1);
+    const aHigh = absA >> half;
+    const aLow = absA & mask;
+    const bHigh = absB >> half;
+    const bLow = absB & mask;
+    
+    // Recursive calls
+    const z0 = Int128.karatsubaMultiply(aLow, bLow);
+    const z1 = Int128.karatsubaMultiply(aLow + aHigh, bLow + bHigh);
+    const z2 = Int128.karatsubaMultiply(aHigh, bHigh);
+    
+    // Combine results
+    const result = (z2.lo << n) + ((z1.lo - z2.lo - z0.lo) << half) + z0.lo;
+    const carry = (z1.hi - z2.hi - z0.hi) + (z2.lo >> half) + ((z1.lo - z2.lo - z0.lo) >> half);
+    
+    const finalResult = result * aSign * bSign;
+    const finalMask = BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
+    
     return {
-      lo: result & mask,
-      hi: (result >> BigInt(128)) & mask
+      lo: finalResult & finalMask,
+      hi: (finalResult >> BigInt(128)) & finalMask
     };
   }
   
@@ -100,9 +142,57 @@ export class Int128 {
     if (b === BigInt(0)) {
       throw new Error('Division by zero');
     }
+    return Int128.longDivision(a, b);
+  }
+  
+  static longDivision(dividend: bigint, divisor: bigint): { quotient: bigint; remainder: bigint } {
+    // Handle negative numbers
+    const dividendSign = dividend < BigInt(0) ? -BigInt(1) : BigInt(1);
+    const divisorSign = divisor < BigInt(0) ? -BigInt(1) : BigInt(1);
+    const absDividend = dividend * dividendSign;
+    const absDivisor = divisor * divisorSign;
+    
+    // Base case: if divisor is larger than dividend
+    if (absDivisor > absDividend) {
+      return {
+        quotient: BigInt(0),
+        remainder: dividend
+      };
+    }
+    
+    // Long division algorithm
+    let quotient = BigInt(0);
+    let remainder = BigInt(0);
+    
+    // Convert to binary representation for bit-by-bit division
+    const dividendBits = Int128.toBinary(absDividend);
+    const divisorBits = Int128.toBinary(absDivisor);
+    
+    // Find the position of the most significant bit
+    const dividendMsb = dividendBits.indexOf('1');
+    const divisorMsb = divisorBits.indexOf('1');
+    
+    if (dividendMsb === -1) {
+      return { quotient: BigInt(0), remainder: BigInt(0) };
+    }
+    
+    // Perform long division
+    for (let i = dividendMsb; i < dividendBits.length; i++) {
+      remainder = (remainder << BigInt(1)) | BigInt(dividendBits[i] === '1' ? 1 : 0);
+      
+      if (remainder >= absDivisor) {
+        remainder -= absDivisor;
+        quotient |= (BigInt(1) << BigInt(dividendBits.length - 1 - i));
+      }
+    }
+    
+    // Apply signs
+    const finalQuotient = quotient * dividendSign * divisorSign;
+    const finalRemainder = remainder * dividendSign;
+    
     return {
-      quotient: a / b,
-      remainder: a % b
+      quotient: finalQuotient,
+      remainder: finalRemainder
     };
   }
   
