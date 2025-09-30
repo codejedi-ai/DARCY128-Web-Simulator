@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Darcy128ApiService } from '../services/darcy128ApiService';
+import { Darcy128CPU, HexInstruction, Int128 } from '../emulator/Darcy128CPU';
+import { Darcy128StateService } from '../services/Darcy128StateService';
 
 // ============================================================================
 // Test Suite Component
@@ -25,45 +26,46 @@ interface TestSuite {
 const Darcy128TestSuite: React.FC = () => {
   const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
   const [isRunning, setIsRunning] = useState(false);
-  const [apiService] = useState(() => new Darcy128ApiService());
+  const [cpu] = useState(() => new Darcy128CPU());
+  const [stateService] = useState(() => new Darcy128StateService());
 
   // ============================================================================
-  // Base 32 Instruction Tests
+  // Base 16 (Hex) Instruction Tests
   // ============================================================================
 
-  const testBase32Instructions = async (): Promise<TestResult[]> => {
+  const testHexInstructions = async (): Promise<TestResult[]> => {
     const tests: TestResult[] = [
       {
-        name: 'Base 32 Encoding - Simple Values',
+        name: 'Hex Encoding - Simple Values',
         status: 'pending',
-        message: 'Testing base 32 encoding of simple instruction values'
+        message: 'Testing hex encoding of simple instruction values'
       },
       {
-        name: 'Base 32 Decoding - Round Trip',
+        name: 'Hex Decoding - Round Trip',
         status: 'pending',
-        message: 'Testing base 32 decoding and round-trip conversion'
+        message: 'Testing hex decoding and round-trip conversion'
       },
       {
-        name: 'Base 32 Validation',
+        name: 'Hex Validation',
         status: 'pending',
-        message: 'Testing base 32 string validation'
+        message: 'Testing hex string validation'
       },
       {
         name: 'MIPS32 Instruction Encoding',
         status: 'pending',
-        message: 'Testing MIPS32 instruction encoding to base 32'
+        message: 'Testing MIPS32 instruction encoding to hex'
       }
     ];
 
-    // Test 1: Base 32 Encoding
+    // Test 1: Hex Encoding
     try {
       tests[0].status = 'running';
       setTestSuites(prev => [...prev]);
 
       const testValues = [0, 1, 32, 1024, 0x12345678];
       const results = testValues.map(value => {
-        const base32 = value.toString(32).toUpperCase();
-        return { value, base32 };
+        const hex = HexInstruction.encode(value);
+        return { value, hex };
       });
 
       tests[0].status = 'passed';
@@ -74,15 +76,15 @@ const Darcy128TestSuite: React.FC = () => {
       tests[0].message = `Encoding failed: ${error}`;
     }
 
-    // Test 2: Base 32 Decoding
+    // Test 2: Hex Decoding
     try {
       tests[1].status = 'running';
       setTestSuites(prev => [...prev]);
 
-      const testStrings = ['0', '1', '10', '100', '123456789'];
+      const testStrings = ['0x0', '0x1', '0x10', '0x100', '0x12345678'];
       const results = testStrings.map(str => {
-        const decoded = parseInt(str, 32);
-        const reencoded = decoded.toString(32).toUpperCase();
+        const decoded = HexInstruction.decode(str);
+        const reencoded = HexInstruction.encode(decoded);
         return { original: str, decoded, reencoded, match: str === reencoded };
       });
 
@@ -94,22 +96,22 @@ const Darcy128TestSuite: React.FC = () => {
       tests[1].message = `Decoding failed: ${error}`;
     }
 
-    // Test 3: Base 32 Validation
+    // Test 3: Hex Validation
     try {
       tests[2].status = 'running';
       setTestSuites(prev => [...prev]);
 
-      const validStrings = ['0', '1', 'A', 'Z', '123ABC'];
-      const invalidStrings = ['G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V'];
+      const validStrings = ['0x0', '0x1', '0xA', '0xFF', '0x123ABC'];
+      const invalidStrings = ['0xG', '0xH', '0xI', '0xJ', '0xK', '0xL', '0xM', '0xN', '0xO', '0xP', '0xQ', '0xR', '0xS', '0xT', '0xU', '0xV'];
       
       const validResults = validStrings.map(str => ({
         string: str,
-        isValid: /^[0-9A-V]+$/.test(str)
+        isValid: HexInstruction.isValid(str)
       }));
 
       const invalidResults = invalidStrings.map(str => ({
         string: str,
-        isValid: /^[0-9A-V]+$/.test(str)
+        isValid: HexInstruction.isValid(str)
       }));
 
       tests[2].status = 'passed';
@@ -126,11 +128,11 @@ const Darcy128TestSuite: React.FC = () => {
       setTestSuites(prev => [...prev]);
 
       const mips32Instructions = [
-        { name: 'add $3, $1, $2', hex: '0x00221820', base32: '0x00221820' },
-        { name: 'sub $3, $1, $2', hex: '0x00221822', base32: '0x00221822' },
-        { name: 'mult $1, $2', hex: '0x00220018', base32: '0x00220018' },
-        { name: 'lw $2, 0($1)', hex: '0x8C220000', base32: '0x8C220000' },
-        { name: 'sw $2, 0($1)', hex: '0xAC220000', base32: '0xAC220000' }
+        { name: 'add $3, $1, $2', hex: '0x00221820' },
+        { name: 'sub $3, $1, $2', hex: '0x00221822' },
+        { name: 'mult $1, $2', hex: '0x00220018' },
+        { name: 'lw $2, 0($1)', hex: '0x8C220000' },
+        { name: 'sw $2, 0($1)', hex: '0xAC220000' }
       ];
 
       tests[3].status = 'passed';
@@ -166,9 +168,9 @@ const Darcy128TestSuite: React.FC = () => {
         message: 'Testing memory query in hex format'
       },
       {
-        name: 'Memory Format - Base 32',
+        name: 'Memory Format - Decimal',
         status: 'pending',
-        message: 'Testing memory query in base 32 format'
+        message: 'Testing memory query in decimal format'
       }
     ];
 
@@ -177,11 +179,13 @@ const Darcy128TestSuite: React.FC = () => {
       tests[0].status = 'running';
       setTestSuites(prev => [...prev]);
 
-      const response = await apiService.queryMemory(undefined, undefined, 0x1000);
+      // Store a test value in memory
+      cpu.getMemory().storeWord(0x1000, BigInt('0x123456789ABCDEF0123456789ABCDEF0'));
+      const entries = cpu.getMemory().queryMemory(0x1000, 16, 'hex');
       
       tests[0].status = 'passed';
       tests[0].message = `Successfully queried address 0x1000`;
-      tests[0].details = response;
+      tests[0].details = entries;
     } catch (error) {
       tests[0].status = 'failed';
       tests[0].message = `Single address query failed: ${error}`;
@@ -192,11 +196,14 @@ const Darcy128TestSuite: React.FC = () => {
       tests[1].status = 'running';
       setTestSuites(prev => [...prev]);
 
-      const response = await apiService.queryMemory(0x2000, 256);
+      // Store test values in memory range
+      cpu.getMemory().storeWord(0x2000, BigInt('0x11111111111111111111111111111111'));
+      cpu.getMemory().storeWord(0x2010, BigInt('0x22222222222222222222222222222222'));
+      const entries = cpu.getMemory().queryMemory(0x2000, 32, 'hex');
       
       tests[1].status = 'passed';
-      tests[1].message = `Successfully queried range 0x2000-0x20FF`;
-      tests[1].details = response;
+      tests[1].message = `Successfully queried range 0x2000-0x201F`;
+      tests[1].details = entries;
     } catch (error) {
       tests[1].status = 'failed';
       tests[1].message = `Range query failed: ${error}`;
@@ -207,30 +214,31 @@ const Darcy128TestSuite: React.FC = () => {
       tests[2].status = 'running';
       setTestSuites(prev => [...prev]);
 
-      const response = await apiService.queryMemory(0x3000, 64);
+      cpu.getMemory().storeWord(0x3000, BigInt('0x33333333333333333333333333333333'));
+      const entries = cpu.getMemory().queryMemory(0x3000, 16, 'hex');
       
       tests[2].status = 'passed';
       tests[2].message = `Successfully queried memory in hex format`;
-      tests[2].details = response;
+      tests[2].details = entries;
     } catch (error) {
       tests[2].status = 'failed';
       tests[2].message = `Hex format query failed: ${error}`;
     }
 
-    // Test 4: Base 32 Format
+    // Test 4: Decimal Format
     try {
       tests[3].status = 'running';
       setTestSuites(prev => [...prev]);
 
-      // This would need to be implemented in the API
-      const response = await apiService.queryMemory(0x4000, 32);
+      cpu.getMemory().storeWord(0x4000, BigInt('0x44444444444444444444444444444444'));
+      const entries = cpu.getMemory().queryMemory(0x4000, 16, 'decimal');
       
       tests[3].status = 'passed';
-      tests[3].message = `Successfully queried memory in base 32 format`;
-      tests[3].details = response;
+      tests[3].message = `Successfully queried memory in decimal format`;
+      tests[3].details = entries;
     } catch (error) {
       tests[3].status = 'failed';
-      tests[3].message = `Base 32 format query failed: ${error}`;
+      tests[3].message = `Decimal format query failed: ${error}`;
     }
 
     return tests;
@@ -274,11 +282,12 @@ const Darcy128TestSuite: React.FC = () => {
       tests[0].status = 'running';
       setTestSuites(prev => [...prev]);
 
-      const response = await apiService.resetProcessor();
+      cpu.reset();
+      const state = cpu.getState();
       
       tests[0].status = 'passed';
-      tests[0].message = `Processor reset successful: ${response.message}`;
-      tests[0].details = response;
+      tests[0].message = `Processor reset successful`;
+      tests[0].details = state;
     } catch (error) {
       tests[0].status = 'failed';
       tests[0].message = `Processor reset failed: ${error}`;
@@ -289,12 +298,17 @@ const Darcy128TestSuite: React.FC = () => {
       tests[1].status = 'running';
       setTestSuites(prev => [...prev]);
 
+      // Set up registers for addition
+      cpu.writeReg(1, BigInt(100)); // $1 = 100
+      cpu.writeReg(2, BigInt(200)); // $2 = 200
+      
       // Execute: add $3, $1, $2 (0x00221820)
-      const response = await apiService.advanceInstruction('0x00221820');
+      cpu.executeInstruction(0x00221820);
+      const result = cpu.readReg(3);
       
       tests[1].status = 'passed';
-      tests[1].message = `MIPS32 ADD instruction executed successfully`;
-      tests[1].details = response;
+      tests[1].message = `MIPS32 ADD instruction executed successfully: $3 = ${result}`;
+      tests[1].details = { result: result.toString(), expected: '300' };
     } catch (error) {
       tests[1].status = 'failed';
       tests[1].message = `MIPS32 ADD instruction failed: ${error}`;
@@ -305,12 +319,17 @@ const Darcy128TestSuite: React.FC = () => {
       tests[2].status = 'running';
       setTestSuites(prev => [...prev]);
 
+      // Set up memory and base register
+      cpu.getMemory().storeWord(0x1000, BigInt('0x123456789ABCDEF0123456789ABCDEF0'));
+      cpu.writeReg(1, BigInt(0x1000)); // $1 = base address
+      
       // Execute: lw $2, 0($1) (0x8C220000)
-      const response = await apiService.advanceInstruction('0x8C220000');
+      cpu.executeInstruction(0x8C220000);
+      const result = cpu.readReg(2);
       
       tests[2].status = 'passed';
-      tests[2].message = `MIPS32 LOAD instruction executed successfully`;
-      tests[2].details = response;
+      tests[2].message = `MIPS32 LOAD instruction executed successfully: $2 = ${result}`;
+      tests[2].details = { result: result.toString() };
     } catch (error) {
       tests[2].status = 'failed';
       tests[2].message = `MIPS32 LOAD instruction failed: ${error}`;
@@ -321,12 +340,17 @@ const Darcy128TestSuite: React.FC = () => {
       tests[3].status = 'running';
       setTestSuites(prev => [...prev]);
 
+      // Set up registers
+      cpu.writeReg(1, BigInt(0x2000)); // $1 = base address
+      cpu.writeReg(2, BigInt('0x99999999999999999999999999999999')); // $2 = value to store
+      
       // Execute: sw $2, 0($1) (0xAC220000)
-      const response = await apiService.advanceInstruction('0xAC220000');
+      cpu.executeInstruction(0xAC220000);
+      const storedValue = cpu.getMemory().loadWord(0x2000);
       
       tests[3].status = 'passed';
       tests[3].message = `MIPS32 STORE instruction executed successfully`;
-      tests[3].details = response;
+      tests[3].details = { stored_value: storedValue.toString() };
     } catch (error) {
       tests[3].status = 'failed';
       tests[3].message = `MIPS32 STORE instruction failed: ${error}`;
@@ -337,12 +361,18 @@ const Darcy128TestSuite: React.FC = () => {
       tests[4].status = 'running';
       setTestSuites(prev => [...prev]);
 
-      // Execute: beq $1, $2, 4 (0x10220004)
-      const response = await apiService.advanceInstruction('0x10220004');
+      // Set up registers for branch test
+      cpu.writeReg(1, BigInt(100)); // $1 = 100
+      cpu.writeReg(2, BigInt(100)); // $2 = 100 (equal to $1)
+      const initialPC = cpu.getPC();
+      
+      // Execute: beq $1, $2, 4 (0x10220004) - should branch
+      cpu.executeInstruction(0x10220004);
+      const newPC = cpu.getPC();
       
       tests[4].status = 'passed';
-      tests[4].message = `MIPS32 BRANCH instruction executed successfully`;
-      tests[4].details = response;
+      tests[4].message = `MIPS32 BRANCH instruction executed successfully: PC changed from ${initialPC} to ${newPC}`;
+      tests[4].details = { initial_pc: initialPC.toString(), new_pc: newPC.toString(), branched: initialPC !== newPC };
     } catch (error) {
       tests[4].status = 'failed';
       tests[4].message = `MIPS32 BRANCH instruction failed: ${error}`;
@@ -384,7 +414,7 @@ const Darcy128TestSuite: React.FC = () => {
       tests[0].status = 'running';
       setTestSuites(prev => [...prev]);
 
-      const response = await apiService.healthCheck();
+      const response = await stateService.healthCheck();
       
       tests[0].status = 'passed';
       tests[0].message = `Health check successful: ${response.status}`;
@@ -394,49 +424,59 @@ const Darcy128TestSuite: React.FC = () => {
       tests[0].message = `Health check failed: ${error}`;
     }
 
-    // Test 2: Advance Instruction
+    // Test 2: Save State
     try {
       tests[1].status = 'running';
       setTestSuites(prev => [...prev]);
 
-      const response = await apiService.advanceInstruction();
+      const response = await stateService.saveState(
+        cpu.getState(),
+        cpu.getExecutionHistory(),
+        cpu.getPerformanceMetrics()
+      );
       
       tests[1].status = 'passed';
-      tests[1].message = `Advance instruction successful`;
+      tests[1].message = `Save state successful`;
       tests[1].details = response;
     } catch (error) {
       tests[1].status = 'failed';
-      tests[1].message = `Advance instruction failed: ${error}`;
+      tests[1].message = `Save state failed: ${error}`;
     }
 
-    // Test 3: Reset Processor
+    // Test 3: Load State
     try {
       tests[2].status = 'running';
       setTestSuites(prev => [...prev]);
 
-      const response = await apiService.resetProcessor();
+      const response = await stateService.loadState();
       
       tests[2].status = 'passed';
-      tests[2].message = `Reset processor successful`;
+      tests[2].message = `Load state successful`;
       tests[2].details = response;
     } catch (error) {
       tests[2].status = 'failed';
-      tests[2].message = `Reset processor failed: ${error}`;
+      tests[2].message = `Load state failed: ${error}`;
     }
 
-    // Test 4: Query Memory
+    // Test 4: Session Management
     try {
       tests[3].status = 'running';
       setTestSuites(prev => [...prev]);
 
-      const response = await apiService.queryMemory(0x5000, 128);
+      const sessionId = stateService.getSessionId();
+      const newSessionId = 'test_session_' + Date.now();
+      stateService.setSessionId(newSessionId);
       
       tests[3].status = 'passed';
-      tests[3].message = `Query memory successful`;
-      tests[3].details = response;
+      tests[3].message = `Session management successful`;
+      tests[3].details = { 
+        original_session: sessionId, 
+        new_session: newSessionId,
+        session_changed: sessionId !== newSessionId
+      };
     } catch (error) {
       tests[3].status = 'failed';
-      tests[3].message = `Query memory failed: ${error}`;
+      tests[3].message = `Session management failed: ${error}`;
     }
 
     return tests;
@@ -451,7 +491,7 @@ const Darcy128TestSuite: React.FC = () => {
     
     const suites: TestSuite[] = [
       {
-        name: 'Base 32 Instruction Tests',
+        name: 'Base 16 (Hex) Instruction Tests',
         tests: [],
         status: 'pending',
         totalTests: 0,
@@ -475,7 +515,7 @@ const Darcy128TestSuite: React.FC = () => {
         failedTests: 0
       },
       {
-        name: 'API Endpoint Tests',
+        name: 'State Persistence Tests',
         tests: [],
         status: 'pending',
         totalTests: 0,
@@ -486,10 +526,10 @@ const Darcy128TestSuite: React.FC = () => {
 
     setTestSuites(suites);
 
-    // Run Base 32 Tests
+    // Run Hex Tests
     suites[0].status = 'running';
     setTestSuites([...suites]);
-    suites[0].tests = await testBase32Instructions();
+    suites[0].tests = await testHexInstructions();
     suites[0].status = 'completed';
     suites[0].totalTests = suites[0].tests.length;
     suites[0].passedTests = suites[0].tests.filter(t => t.status === 'passed').length;
@@ -516,7 +556,7 @@ const Darcy128TestSuite: React.FC = () => {
     suites[2].failedTests = suites[2].tests.filter(t => t.status === 'failed').length;
     setTestSuites([...suites]);
 
-    // Run API Endpoint Tests
+    // Run State Persistence Tests
     suites[3].status = 'running';
     setTestSuites([...suites]);
     suites[3].tests = await testAPIEndpoints();
@@ -560,7 +600,7 @@ const Darcy128TestSuite: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">DARCY128 Test Suite</h1>
             <p className="text-gray-600 mt-2">
-              Comprehensive browser-based tests for base 32 instructions, map-based memory, and MIPS32 compatibility
+              Comprehensive browser-based tests for base 16 (hex) instructions, map-based memory, and MIPS32 compatibility
             </p>
           </div>
           <button
@@ -636,10 +676,10 @@ const Darcy128TestSuite: React.FC = () => {
         <div className="mt-8 p-4 bg-blue-50 rounded-lg">
           <h3 className="text-lg font-semibold text-blue-900 mb-2">Test Instructions</h3>
           <ul className="text-sm text-blue-800 space-y-1">
-            <li>• <strong>Base 32 Tests:</strong> Validates instruction encoding/decoding in base 32 format</li>
+            <li>• <strong>Base 16 (Hex) Tests:</strong> Validates instruction encoding/decoding in hexadecimal format</li>
             <li>• <strong>Memory Map Tests:</strong> Tests map-based memory queries and formatting</li>
             <li>• <strong>MIPS32 Compatibility:</strong> Ensures MIPS32 code runs correctly on DARCY128</li>
-            <li>• <strong>API Endpoint Tests:</strong> Validates all backend API functionality</li>
+            <li>• <strong>State Persistence Tests:</strong> Validates state saving/loading functionality</li>
           </ul>
         </div>
       </div>

@@ -1,40 +1,28 @@
-// DARCY128 Advance Instruction Endpoint
-// Executes a single instruction and returns updated CPU state
-// Supports MIPS32 backward compatibility with base 32 instruction storage
-
-import { Handler } from '@netlify/functions';
+// DARCY128 CPU Emulator - Client Side
+// Handles all CPU emulation logic in the browser
+// Uses base 16 (hexadecimal) instruction storage and map-based memory
 
 // ============================================================================
 // Types and Interfaces
 // ============================================================================
 
-interface Darcy128Register {
+export interface Darcy128Register {
   name: string;
   value: string; // 128-bit value as hex string
   type: 'general' | 'special';
 }
 
-interface Darcy128CPUState {
+export interface Darcy128CPUState {
   registers: Darcy128Register[];
   pc: string;
   hi: string;
   lo: string;
   running: boolean;
   memory: Map<string, string>; // Memory as map/dictionary
+  execution_mode: 'mips32' | 'darcy128';
 }
 
-interface AdvanceInstructionRequest {
-  instruction?: string; // Hex encoded instruction
-  mode?: 'mips32' | 'darcy128'; // Execution mode
-  query_memory?: {
-    address?: string; // Single address to query (hex)
-    start?: string;   // Start address for range query (hex)
-    length?: number;  // Number of bytes to read
-    format?: 'hex' | 'decimal' | 'binary'; // Output format
-  };
-}
-
-interface MemoryEntry {
+export interface MemoryEntry {
   address: string;
   value: string;
   format: string;
@@ -42,38 +30,11 @@ interface MemoryEntry {
   decoded_instruction?: string;
 }
 
-interface AdvanceInstructionResponse {
-  success: boolean;
-  cpu_state: Darcy128CPUState;
-  execution_history: string[];
-  performance_metrics: {
-    instructions_executed: number;
-    simd_utilization: number;
-    crypto_acceleration: number;
-    memory_bandwidth: number;
-  };
-  instruction_info?: {
-    decoded: string;
-    mode: string;
-    hex_encoded: string;
-  };
-  memory_query?: {
-    entries: MemoryEntry[];
-    total_entries: number;
-    query_info: {
-      query_type: 'single' | 'range';
-      address_range: string;
-      format: string;
-    };
-  };
-  error?: string;
-}
-
 // ============================================================================
 // Base 16 (Hexadecimal) Instruction Utilities
 // ============================================================================
 
-class HexInstruction {
+export class HexInstruction {
   static encode(instruction: number): string {
     return '0x' + instruction.toString(16).padStart(8, '0').toUpperCase();
   }
@@ -98,7 +59,7 @@ class HexInstruction {
 // 128-bit Arithmetic Utilities
 // ============================================================================
 
-class Int128 {
+export class Int128 {
   static fromString(value: string): bigint {
     if (value.startsWith('0x')) {
       return BigInt(value);
@@ -108,6 +69,14 @@ class Int128 {
   
   static toString(value: bigint): string {
     return '0x' + value.toString(16).padStart(32, '0');
+  }
+  
+  static toDecimal(value: bigint): string {
+    return value.toString();
+  }
+  
+  static toBinary(value: bigint): string {
+    return value.toString(2).padStart(128, '0');
   }
   
   static add(a: bigint, b: bigint): bigint {
@@ -164,7 +133,7 @@ class Int128 {
 // Memory System - Map/Dictionary Based
 // ============================================================================
 
-class Darcy128Memory {
+export class Darcy128Memory {
   private memory: Map<string, string> = new Map(); // Address -> Value mapping
   private readonly MEMORY_SIZE = 8 * 1024 * 1024; // 8MB
   
@@ -252,17 +221,6 @@ class Darcy128Memory {
     }
   }
   
-  dump(start: number, length: number): { [address: string]: string } {
-    const result: { [address: string]: string } = {};
-    for (let i = 0; i < length; i += 16) {
-      const addr = start + i;
-      const addrStr = addr.toString();
-      const value = this.memory.get(addrStr) || Int128.toString(BigInt(0));
-      result[addrStr] = value;
-    }
-    return result;
-  }
-  
   // Query memory with detailed formatting
   queryMemory(startAddr: number, length: number, format: string = 'hex'): MemoryEntry[] {
     const entries: MemoryEntry[] = [];
@@ -311,156 +269,21 @@ class Darcy128Memory {
     
     return entries;
   }
-}
-
-// ============================================================================
-// CPU Core - MIPS32 Compatible
-// ============================================================================
-
-class Darcy128CPU {
-  private registers: bigint[] = new Array(32).fill(BigInt(0));
-  private pc: bigint = BigInt(0);
-  private hi: bigint = BigInt(0);
-  private lo: bigint = BigInt(0);
-  private memory: Darcy128Memory;
-  private running: boolean = false;
-  private executionHistory: string[] = [];
-  private instructionsExecuted: number = 0;
-  private executionMode: 'mips32' | 'darcy128' = 'mips32'; // Default to MIPS32 compatibility
   
-  constructor() {
-    this.memory = new Darcy128Memory();
-  }
-  
-  reset(): void {
-    this.registers.fill(BigInt(0));
-    this.pc = BigInt(0);
-    this.hi = BigInt(0);
-    this.lo = BigInt(0);
-    this.running = false;
-    this.executionHistory = [];
-    this.instructionsExecuted = 0;
-    this.executionMode = 'mips32'; // Reset to MIPS32 mode
-  }
-  
-  setExecutionMode(mode: 'mips32' | 'darcy128'): void {
-    this.executionMode = mode;
-  }
-  
-  getExecutionMode(): 'mips32' | 'darcy128' {
-    return this.executionMode;
-  }
-  
-  readReg(reg: number): bigint {
-    if (reg === 0) return BigInt(0);
-    if (reg >= 32) throw new Error('Invalid register');
-    return this.registers[reg];
-  }
-  
-  writeReg(reg: number, value: bigint): void {
-    if (reg === 0) return;
-    if (reg >= 32) throw new Error('Invalid register');
-    this.registers[reg] = value;
-  }
-  
-  getPC(): bigint { return this.pc; }
-  setPC(value: bigint): void { this.pc = value; }
-  
-  getHI(): bigint { return this.hi; }
-  setHI(value: bigint): void { this.hi = value; }
-  
-  getLO(): bigint { return this.lo; }
-  setLO(value: bigint): void { this.lo = value; }
-  
-  getMemory(): Darcy128Memory { return this.memory; }
-  
-  isRunning(): boolean { return this.running; }
-  stop(): void { this.running = false; }
-  
-  fetch(): number {
-    const instruction = this.memory.fetchInstruction(Number(this.pc));
-    this.pc += BigInt(4);
-    return instruction;
-  }
-  
-  executeInstruction(instruction: number): void {
-    const instr = this.decodeInstruction(instruction);
-    instr.execute(this);
-    this.instructionsExecuted++;
-  }
-  
-  private decodeInstruction(word: number): Instruction {
-    const opcode = (word >> 26) & 0x3F;
-    
-    if (opcode === 0x00) { // R-type
-      const func = word & 0x3F;
-      switch (func) {
-        case 0x20: return new AddInstruction(word);
-        case 0x22: return new SubInstruction(word);
-        case 0x18: return new MultInstruction(word);
-        case 0x19: return new MultuInstruction(word);
-        case 0x1A: return new DivInstruction(word);
-        case 0x1B: return new DivuInstruction(word);
-        case 0x10: return new MfhiInstruction(word);
-        case 0x12: return new MfloInstruction(word);
-        case 0x14: return new LisInstruction(word);
-        case 0x08: return new JrInstruction(word);
-        case 0x09: return new JalrInstruction(word);
-        case 0x2A: return new SltInstruction(word);
-        case 0x2B: return new SltuInstruction(word);
-        default:
-          throw new Error(`Unknown R-type function: 0x${func.toString(16)}`);
-      }
-    } else { // I-type
-      switch (opcode) {
-        case 0x23: return new LwInstruction(word);
-        case 0x2B: return new SwInstruction(word);
-        case 0x04: return new BeqInstruction(word);
-        case 0x05: return new BneInstruction(word);
-        default:
-          throw new Error(`Unknown opcode: 0x${opcode.toString(16)}`);
-      }
+  dump(start: number, length: number): { [address: string]: string } {
+    const result: { [address: string]: string } = {};
+    for (let i = 0; i < length; i += 16) {
+      const addr = start + i;
+      const addrStr = addr.toString();
+      const value = this.memory.get(addrStr) || Int128.toString(BigInt(0));
+      result[addrStr] = value;
     }
+    return result;
   }
   
-  addExecutionHistory(entry: string): void {
-    this.executionHistory.push(entry);
-    if (this.executionHistory.length > 100) {
-      this.executionHistory.shift();
-    }
-  }
-  
-  getState(): Darcy128CPUState {
-    const registers: Darcy128Register[] = [];
-    for (let i = 0; i < 32; i++) {
-      registers.push({
-        name: `$${i}`,
-        value: Int128.toString(this.registers[i]),
-        type: 'general'
-      });
-    }
-    
-    return {
-      registers,
-      pc: Int128.toString(this.pc),
-      hi: Int128.toString(this.hi),
-      lo: Int128.toString(this.lo),
-      running: this.running,
-      memory: this.memory.toObject()
-    };
-  }
-  
-  getExecutionHistory(): string[] {
-    return [...this.executionHistory];
-  }
-  
-  getPerformanceMetrics() {
-    return {
-      instructions_executed: this.instructionsExecuted,
-      simd_utilization: Math.min(100, this.instructionsExecuted * 2),
-      crypto_acceleration: Math.min(500, this.instructionsExecuted * 5),
-      memory_bandwidth: Math.min(100, this.instructionsExecuted * 1.5)
-    };
+  // Clear all memory
+  clear(): void {
+    this.memory.clear();
   }
 }
 
@@ -742,119 +565,184 @@ class BneInstruction extends Instruction {
 }
 
 // ============================================================================
-// Global CPU Instance
+// CPU Core - MIPS32 Compatible
 // ============================================================================
 
-let globalCPU: Darcy128CPU | null = null;
-
-function getCPU(): Darcy128CPU {
-  if (!globalCPU) {
-    globalCPU = new Darcy128CPU();
+export class Darcy128CPU {
+  private registers: bigint[] = new Array(32).fill(BigInt(0));
+  private pc: bigint = BigInt(0);
+  private hi: bigint = BigInt(0);
+  private lo: bigint = BigInt(0);
+  private memory: Darcy128Memory;
+  private running: boolean = false;
+  private executionHistory: string[] = [];
+  private instructionsExecuted: number = 0;
+  private executionMode: 'mips32' | 'darcy128' = 'mips32'; // Default to MIPS32 compatibility
+  
+  constructor() {
+    this.memory = new Darcy128Memory();
   }
-  return globalCPU;
-}
-
-// ============================================================================
-// Netlify Handler
-// ============================================================================
-
-export const handler: Handler = async (event, context) => {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Content-Type': 'application/json',
-  };
-
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
+  
+  reset(): void {
+    // Clear all registers
+    this.registers.fill(BigInt(0));
+    
+    // Reset special registers
+    this.pc = BigInt(0);
+    this.hi = BigInt(0);
+    this.lo = BigInt(0);
+    
+    // Reset execution state
+    this.running = false;
+    this.executionHistory = [];
+    this.instructionsExecuted = 0;
+    
+    // Reset to MIPS32 compatibility mode
+    this.executionMode = 'mips32';
+    
+    // Add reset entry to history
+    this.addExecutionHistory(`[${this.executionMode}] CPU RESET - All registers cleared, PC=0, execution mode=${this.executionMode}`);
   }
-
-  try {
-    const cpu = getCPU();
-    let request: AdvanceInstructionRequest = {};
-
-    if (event.httpMethod === 'POST') {
-      request = JSON.parse(event.body || '{}');
-    }
-
-    let response: AdvanceInstructionResponse;
-
-    try {
-      let instruction: number;
-      let instructionInfo: any = {};
-
-      if (request.instruction) {
-        // Execute specific instruction (hex encoded)
-        if (HexInstruction.isValid(request.instruction)) {
-          instruction = HexInstruction.decode(request.instruction);
-          instructionInfo = {
-            decoded: `0x${instruction.toString(16).padStart(8, '0')}`,
-            mode: request.mode || 'mips32',
-            hex_encoded: request.instruction
-          };
-        } else {
-          // Try as raw number if not valid hex
-          instruction = parseInt(request.instruction, 16);
-          instructionInfo = {
-            decoded: `0x${instruction.toString(16).padStart(8, '0')}`,
-            mode: request.mode || 'mips32',
-            hex_encoded: HexInstruction.encode(instruction)
-          };
-        }
-        
-        if (request.mode) {
-          cpu.setExecutionMode(request.mode);
-        }
-        
-        cpu.executeInstruction(instruction);
-      } else {
-        // Fetch and execute next instruction
-        instruction = cpu.fetch();
-        instructionInfo = {
-          decoded: `0x${instruction.toString(16).padStart(8, '0')}`,
-          mode: cpu.getExecutionMode(),
-          hex_encoded: HexInstruction.encode(instruction)
-        };
-        cpu.executeInstruction(instruction);
+  
+  setExecutionMode(mode: 'mips32' | 'darcy128'): void {
+    this.executionMode = mode;
+  }
+  
+  getExecutionMode(): 'mips32' | 'darcy128' {
+    return this.executionMode;
+  }
+  
+  readReg(reg: number): bigint {
+    if (reg === 0) return BigInt(0);
+    if (reg >= 32) throw new Error('Invalid register');
+    return this.registers[reg];
+  }
+  
+  writeReg(reg: number, value: bigint): void {
+    if (reg === 0) return;
+    if (reg >= 32) throw new Error('Invalid register');
+    this.registers[reg] = value;
+  }
+  
+  getPC(): bigint { return this.pc; }
+  setPC(value: bigint): void { this.pc = value; }
+  
+  getHI(): bigint { return this.hi; }
+  setHI(value: bigint): void { this.hi = value; }
+  
+  getLO(): bigint { return this.lo; }
+  setLO(value: bigint): void { this.lo = value; }
+  
+  getMemory(): Darcy128Memory { return this.memory; }
+  
+  isRunning(): boolean { return this.running; }
+  stop(): void { this.running = false; }
+  
+  fetch(): number {
+    const instruction = this.memory.fetchInstruction(Number(this.pc));
+    this.pc += BigInt(4);
+    return instruction;
+  }
+  
+  executeInstruction(instruction: number): void {
+    const instr = this.decodeInstruction(instruction);
+    instr.execute(this);
+    this.instructionsExecuted++;
+  }
+  
+  private decodeInstruction(word: number): Instruction {
+    const opcode = (word >> 26) & 0x3F;
+    
+    if (opcode === 0x00) { // R-type
+      const func = word & 0x3F;
+      switch (func) {
+        case 0x20: return new AddInstruction(word);
+        case 0x22: return new SubInstruction(word);
+        case 0x18: return new MultInstruction(word);
+        case 0x19: return new MultuInstruction(word);
+        case 0x1A: return new DivInstruction(word);
+        case 0x1B: return new DivuInstruction(word);
+        case 0x10: return new MfhiInstruction(word);
+        case 0x12: return new MfloInstruction(word);
+        case 0x14: return new LisInstruction(word);
+        case 0x08: return new JrInstruction(word);
+        case 0x09: return new JalrInstruction(word);
+        case 0x2A: return new SltInstruction(word);
+        case 0x2B: return new SltuInstruction(word);
+        default:
+          throw new Error(`Unknown R-type function: 0x${func.toString(16)}`);
       }
-
-      response = {
-        success: true,
-        cpu_state: cpu.getState(),
-        execution_history: cpu.getExecutionHistory(),
-        performance_metrics: cpu.getPerformanceMetrics(),
-        instruction_info: instructionInfo
-      };
-    } catch (error) {
-      response = {
-        success: false,
-        cpu_state: cpu.getState(),
-        execution_history: cpu.getExecutionHistory(),
-        performance_metrics: cpu.getPerformanceMetrics(),
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
+    } else { // I-type
+      switch (opcode) {
+        case 0x23: return new LwInstruction(word);
+        case 0x2B: return new SwInstruction(word);
+        case 0x04: return new BeqInstruction(word);
+        case 0x05: return new BneInstruction(word);
+        default:
+          throw new Error(`Unknown opcode: 0x${opcode.toString(16)}`);
+      }
     }
-
+  }
+  
+  addExecutionHistory(entry: string): void {
+    this.executionHistory.push(entry);
+    if (this.executionHistory.length > 100) {
+      this.executionHistory.shift();
+    }
+  }
+  
+  getState(): Darcy128CPUState {
+    const registers: Darcy128Register[] = [];
+    for (let i = 0; i < 32; i++) {
+      registers.push({
+        name: `$${i}`,
+        value: Int128.toString(this.registers[i]),
+        type: 'general'
+      });
+    }
+    
     return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(response)
-    };
-
-  } catch (error) {
-    const errorResponse: AdvanceInstructionResponse = {
-      success: false,
-      cpu_state: getCPU().getState(),
-      execution_history: getCPU().getExecutionHistory(),
-      performance_metrics: getCPU().getPerformanceMetrics(),
-      error: error instanceof Error ? error.message : 'Unknown error'
-    };
-
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify(errorResponse)
+      registers,
+      pc: Int128.toString(this.pc),
+      hi: Int128.toString(this.hi),
+      lo: Int128.toString(this.lo),
+      running: this.running,
+      memory: this.memory.toObject(),
+      execution_mode: this.executionMode
     };
   }
-};
+  
+  getExecutionHistory(): string[] {
+    return [...this.executionHistory];
+  }
+  
+  getPerformanceMetrics() {
+    return {
+      instructions_executed: this.instructionsExecuted,
+      simd_utilization: Math.min(100, this.instructionsExecuted * 2),
+      crypto_acceleration: Math.min(500, this.instructionsExecuted * 5),
+      memory_bandwidth: Math.min(100, this.instructionsExecuted * 1.5)
+    };
+  }
+  
+  // Load state from server
+  loadState(state: Darcy128CPUState): void {
+    // Load registers
+    for (let i = 0; i < 32; i++) {
+      this.registers[i] = Int128.fromString(state.registers[i].value);
+    }
+    
+    // Load special registers
+    this.pc = Int128.fromString(state.pc);
+    this.hi = Int128.fromString(state.hi);
+    this.lo = Int128.fromString(state.lo);
+    
+    // Load memory
+    this.memory.fromObject(state.memory);
+    
+    // Load execution mode
+    this.executionMode = state.execution_mode;
+    
+    this.addExecutionHistory(`[${this.executionMode}] STATE LOADED from server`);
+  }
+}
