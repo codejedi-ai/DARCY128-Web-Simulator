@@ -594,8 +594,9 @@ const Darcy128TestSuite: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
+    <div style={{ minHeight: '100vh', backgroundColor: '#0a0a0a', color: '#ffffff', overflowY: 'auto' }}>
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">DARCY128 Test Suite</h1>
@@ -682,6 +683,7 @@ const Darcy128TestSuite: React.FC = () => {
             <li>• <strong>State Persistence Tests:</strong> Validates state saving/loading functionality</li>
           </ul>
         </div>
+      </div>
       </div>
     </div>
   );

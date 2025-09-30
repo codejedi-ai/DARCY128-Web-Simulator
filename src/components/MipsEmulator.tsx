@@ -286,9 +286,10 @@ export default function MipsEmulator({ screenWidth }: MipsEmulatorProps) {
     <div style={{ 
       margin: 0, 
       padding: 0, 
-      overflow: "hidden",
+      overflow: "auto",
       boxSizing: "border-box",
-      background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)'
+      background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)',
+      minHeight: '100vh'
     }}>
       <Navbar screenWidth={screenWidth} />
       

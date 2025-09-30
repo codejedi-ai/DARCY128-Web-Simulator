@@ -10,20 +10,23 @@ html, body {
     padding: 0;
     width: 100%;
     height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     font-family: Arial, sans-serif;
 }
 
 #app {
     width: 100vw;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
-/* Ensure no scroll bars on any element */
-* {
+/* Ensure proper scrolling on page containers */
+.page-container {
     overflow-x: hidden;
-    overflow-y: hidden;
+    overflow-y: auto;
+    min-height: 100vh;
 }
 
 /* Specific canvas styling */

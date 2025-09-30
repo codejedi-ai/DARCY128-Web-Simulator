@@ -2,6 +2,8 @@
   min-height: 100vh;
   position: relative;
   padding-top: 90px; /* Account for fixed navbar */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .content {

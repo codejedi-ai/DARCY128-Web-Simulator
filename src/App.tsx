@@ -24,8 +24,9 @@ export default function App({ onNavigate }: AppProps) {
         <div style={{ 
             margin: 0, 
             padding: 0, 
-            overflow: "hidden",
-            boxSizing: "border-box"
+            overflow: "auto",
+            boxSizing: "border-box",
+            minHeight: '100vh'
         }}>
             <Navbar screenWidth={screenWidth} />
             <Canvas screenWidth={screenWidth} />
