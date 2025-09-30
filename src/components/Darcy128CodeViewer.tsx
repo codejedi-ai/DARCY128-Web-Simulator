@@ -156,59 +156,12 @@ export default function Darcy128CodeViewer() {
       <div style={{ paddingTop: '80px', padding: '20px' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <div>
               <h1 style={{ color: '#00ffff', fontSize: '32px', margin: 0 }}>DARCY128 Code Viewer</h1>
               <p style={{ color: '#cccccc', marginTop: '10px' }}>
                 View and execute compiled DARCY128 assembly code
               </p>
-            </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={executeNextInstruction}
-                disabled={isRunning || currentLine >= compiledCode.length - 1}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: isRunning || currentLine >= compiledCode.length - 1 ? '#666' : '#0066ff',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: isRunning || currentLine >= compiledCode.length - 1 ? 'not-allowed' : 'pointer',
-                  fontWeight: 'bold'
-                }}
-              >
-                ⏭️ Next Step
-              </button>
-              <button
-                onClick={runAllInstructions}
-                disabled={isRunning}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: isRunning ? '#666' : '#00ff00',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: isRunning ? 'not-allowed' : 'pointer',
-                  fontWeight: 'bold'
-                }}
-              >
-                ▶️ Run All
-              </button>
-              <button
-                onClick={resetProgram}
-                disabled={isRunning}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: isRunning ? '#666' : '#ff6600',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: isRunning ? 'not-allowed' : 'pointer',
-                  fontWeight: 'bold'
-                }}
-              >
-                🔄 Reset
-              </button>
             </div>
           </div>
 
@@ -345,6 +298,55 @@ export default function Darcy128CodeViewer() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Controls at bottom */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
+            <button
+              onClick={executeNextInstruction}
+              disabled={isRunning || currentLine >= compiledCode.length - 1}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: isRunning || currentLine >= compiledCode.length - 1 ? '#666' : '#0066ff',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: isRunning || currentLine >= compiledCode.length - 1 ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              ⏭️ Next Step
+            </button>
+            <button
+              onClick={runAllInstructions}
+              disabled={isRunning}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: isRunning ? '#666' : '#00ff00',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: isRunning ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              ▶️ Run All
+            </button>
+            <button
+              onClick={resetProgram}
+              disabled={isRunning}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: isRunning ? '#666' : '#ff6600',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: isRunning ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              🔄 Reset
+            </button>
           </div>
         </div>
       </div>

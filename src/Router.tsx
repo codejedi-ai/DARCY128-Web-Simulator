@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'preact/hooks';
 import App from './App';
 import FeaturesPage from './pages/pages/features';
-import MipsEmulator from './components/MipsEmulator';
 import Darcy128CodeViewer from './components/Darcy128CodeViewer';
-import Darcy128TestSuite from './components/Darcy128TestSuite';
+import RegisterView from './components/RegisterView';
 
 export default function Router() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -27,26 +26,21 @@ export default function Router() {
     return <App onNavigate={navigate} />;
   }
 
-  // Route to MIPS emulator (legacy)
-  if (currentPath === '/mips' || currentPath === '/emulator') {
-    return <MipsEmulator screenWidth={window.innerWidth} />;
-  }
-
-  // Route to Darcy128 emulator (revolutionary 128-bit processor)
-  if (currentPath === '/darcy128' || currentPath === '/darcy128-emulator') {
+  // Route to MIPS instruction stepping (uses Darcy128CodeViewer)
+  if (currentPath === '/step' || currentPath === '/mips-step') {
     return <Darcy128CodeViewer />;
   }
 
-  // Route to Darcy128 Test Suite
-  if (currentPath === '/tests' || currentPath === '/test-suite') {
-    return <Darcy128TestSuite />;
+  // Route to Register View
+  if (currentPath === '/registers' || currentPath === '/register-view') {
+    return <RegisterView />;
   }
 
-  // Route to Features (home page)
+  // Home -> Features (now hosts test suite)
   if (currentPath === '/' || currentPath === '/features') {
     return <FeaturesPage />;
   }
 
-  // Default to Features page
+  // Default
   return <FeaturesPage />;
 }
