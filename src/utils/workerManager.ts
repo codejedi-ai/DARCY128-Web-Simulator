@@ -90,6 +90,17 @@ class WorkerManager {
     });
   }
 
+  // Fetch hardcoded instruction program (placeholder for worker-backed fetch)
+  async fetchInstructions(): Promise<Array<{ id: string; hexCode: string; assembly: string }>> {
+    // In future, delegate to a dedicated worker message
+    return [
+      { id: '1', hexCode: '0x00000814', assembly: 'lis $1, 100' },
+      { id: '2', hexCode: '0x00001014', assembly: 'lis $2, 200' },
+      { id: '3', hexCode: '0x00221820', assembly: 'add $3, $1, $2' },
+      { id: '4', hexCode: '0x00000008', assembly: 'jr $0' }
+    ];
+  }
+
   // Fetch all events
   async fetchEvents(): Promise<Event[]> {
     try {

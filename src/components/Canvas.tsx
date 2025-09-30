@@ -1,4 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
+import { useInstruction } from '../emulator/InstructionContext';
+import { workerManager } from '../utils/workerManager';
 import { Event } from "../types/Event";
 import { PageEntity as Paper } from "../types/PageEntity";
 import { PageEntityFactory } from "../types/PageEntityFactory";
@@ -12,6 +14,7 @@ interface CanvasProps {
 
 export default function Canvas({ screenWidth }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const { program } = useInstruction();
   const [events, setEvents] = useState<Event[]>([]);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [activeEvent, setActiveEvent] = useState<Event | null>(null);
@@ -76,12 +79,39 @@ export default function Canvas({ screenWidth }: CanvasProps) {
 
   // Load events from worker
   useEffect(() => {
+    // Load instructions from worker and map to synthetic papers
+    (async () => {
+      try {
+        const instr = await workerManager.fetchInstructions();
+        // Convert to synthetic events/papers
+        const now = new Date();
+        const syntheticEvents: any[] = instr.map((inst, idx) => ({
+          id: `inst-${inst.id}`,
+          title: `L${idx + 1}: ${inst.hexCode}`,
+          description: inst.assembly,
+          link: '',
+          x: 50 + (idx % 3) * 260,
+          y: 50 + Math.floor(idx / 3) * 90,
+          color: '#E6F3FF',
+          buttonColor: '#0066ff',
+          time: '',
+          createdAt: now
+        }));
+        setEvents(syntheticEvents);
+        setPapers(syntheticEvents.map(e => PageEntityFactory.create(e)));
+      } catch (e) {
+        console.error('Failed to load instructions:', e);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
     const loadEvents = async () => {
       try {
         setIsLoading(true);
         const loadedEvents = await workerManager.fetchEvents();
-        setEvents(loadedEvents);
-        setPapers(loadedEvents.map(event => PageEntityFactory.create(event)));
+        setEvents(prev => prev.length ? prev : loadedEvents);
+        setPapers(prev => prev.length ? prev : loadedEvents.map(event => PageEntityFactory.create(event)));
       } catch (error) {
         console.error('Failed to load events:', error);
         // Fallback to empty state
@@ -197,27 +227,8 @@ export default function Canvas({ screenWidth }: CanvasProps) {
         ctx.stroke();
       }
 
-      // Draw all papers (legacy content on board)
+      // Draw all papers (instruction cards rendered via PageEntity/PageEntityFactory)
       papers.forEach((paper) => paper.draw(ctx));
-
-      // Draw instruction blocks (Scratch-style)
-      instructionBlocks.forEach((block) => {
-        const blockWidth = 150;
-        const blockHeight = 60;
-        ctx.fillStyle = '#0066ff';
-        ctx.strokeStyle = '#00ffff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.roundRect(block.x, block.y, blockWidth, blockHeight, 8);
-        ctx.fill();
-        ctx.stroke();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 12px monospace';
-        ctx.fillText(block.type.toUpperCase(), block.x + 10, block.y + 18);
-        ctx.font = '10px monospace';
-        const paramsText = Object.entries(block.params).map(([k,v]) => `${k}:${v}`).join('  ');
-        ctx.fillText(paramsText, block.x + 10, block.y + 36);
-      });
 
       
       // Restore context
@@ -239,39 +250,29 @@ export default function Canvas({ screenWidth }: CanvasProps) {
       const adjustedMouseX = (mouseX - panOffset.x) / scale;
       const adjustedMouseY = (mouseY - panOffset.y) / scale;
 
-      // Check if clicking on a paper (paper body, push pin, or link button)
+      // Enable legacy paper interactions for Visual Programmer (drag/move/delete if enabled)
       let clickedOnEvent = false;
       for (let i = events.length - 1; i >= 0; i--) {
         const event = events[i];
         const paper = papers[i];
-        
+        const adjustedMouseX = (mouseX - panOffset.x) / scale;
+        const adjustedMouseY = (mouseY - panOffset.y) / scale;
         const isClickOnPaper = paper.hitTest(adjustedMouseX, adjustedMouseY);
         const isClickOnPushPin = paper.isClickOnPushPin(adjustedMouseX, adjustedMouseY);
         const isClickOnLinkButton = paper.isClickOnLinkButton(adjustedMouseX, adjustedMouseY);
-
         if (isClickOnPaper || isClickOnPushPin || isClickOnLinkButton) {
           if (isDeleteMode) {
-            // In delete mode - delete the paper
             deleteEvent(i);
             clickedOnEvent = true;
             break;
           } else if (isClickOnLinkButton && event.link) {
-            // Clicking on link button - open the link
             window.open(event.link, '_blank');
             clickedOnEvent = true;
             break;
-          } else if (isClickOnPushPin) {
-            // Clicking on push pin - no special action needed
-            clickedOnEvent = true;
-            break;
           } else {
-            // Clicking on paper starts dragging
             setIsDraggingPaper(true);
             setDraggedPaperIndex(i);
-            setDragOffset({
-              x: adjustedMouseX - event.x,
-              y: adjustedMouseY - event.y
-            });
+            setDragOffset({ x: adjustedMouseX - event.x, y: adjustedMouseY - event.y });
             clickedOnEvent = true;
             break;
           }
@@ -507,7 +508,26 @@ export default function Canvas({ screenWidth }: CanvasProps) {
       canvas.removeEventListener("wheel", handleWheel as any);
       canvas.removeEventListener("pointerdown", handlePointerDown as any);
     };
-    }, [events, papers, panOffset, isPanning, isDraggingPaper, draggedPaperIndex, dragOffset, scale]);
+  }, [events, papers, panOffset, isPanning, isDraggingPaper, draggedPaperIndex, dragOffset, scale]);
+
+  // Convert program instructions to synthetic papers using PageEntity/PageEntityFactory
+  useEffect(() => {
+    const now = new Date();
+    const syntheticEvents: any[] = program.map((inst, idx) => ({
+      id: `inst-${inst.id}`,
+      title: `L${idx + 1}: ${inst.hexCode}`,
+      description: inst.assembly,
+      link: '',
+      x: 50 + (idx % 3) * 260,
+      y: 50 + Math.floor(idx / 3) * 90,
+      color: '#E6F3FF',
+      buttonColor: '#0066ff',
+      time: '',
+      createdAt: now
+    }));
+    setEvents(syntheticEvents);
+    setPapers(syntheticEvents.map(e => PageEntityFactory.create(e)));
+  }, [program]);
 
   // Handle window resize for responsive design
   useEffect(() => {

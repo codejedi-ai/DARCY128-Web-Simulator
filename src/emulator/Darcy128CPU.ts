@@ -5,6 +5,7 @@
 // ============================================================================
 // Types and Interfaces
 // ============================================================================
+import { Darcy128Memory } from './memory';
 
 export interface Darcy128Register {
   name: string;
@@ -18,7 +19,7 @@ export interface Darcy128CPUState {
   hi: string;
   lo: string;
   running: boolean;
-  memory: Map<string, string>; // Memory as map/dictionary
+  memory: Darcy128Memory;
   execution_mode: 'mips32' | 'darcy128';
 }
 
@@ -223,159 +224,7 @@ export class Int128 {
 // Memory System - Map/Dictionary Based
 // ============================================================================
 
-export class Darcy128Memory {
-  private memory: Map<string, string> = new Map(); // Address -> Value mapping
-  private readonly MEMORY_SIZE = 8 * 1024 * 1024; // 8MB
-  
-  // Memory-mapped I/O addresses
-  private static readonly MMIO_OUTPUT_QWORD = 0xffff0018;
-  private static readonly MMIO_INPUT_QWORD = 0xffff0010;
-  
-  loadWord(address: number): bigint {
-    if (address === Darcy128Memory.MMIO_INPUT_QWORD) {
-      return BigInt('0x' + Math.random().toString(16).substring(2).repeat(8).substring(0, 32));
-    }
-    
-    this.checkAddress(address, 16);
-    this.checkAlignment(address, 16);
-    
-    const addrStr = address.toString();
-    const value = this.memory.get(addrStr);
-    return value ? Int128.fromString(value) : BigInt(0);
-  }
-  
-  storeWord(address: number, value: bigint): void {
-    if (address === Darcy128Memory.MMIO_OUTPUT_QWORD) {
-      console.log(`Output: ${Int128.toString(value)}`);
-      return;
-    }
-    
-    this.checkAddress(address, 16);
-    this.checkAlignment(address, 16);
-    
-    const addrStr = address.toString();
-    this.memory.set(addrStr, Int128.toString(value));
-  }
-  
-  // Store instruction in hex format
-  storeInstruction(address: number, instruction: number): void {
-    this.checkAddress(address, 4);
-    this.checkAlignment(address, 4);
-    
-    const hexInstruction = HexInstruction.encode(instruction);
-    const addrStr = address.toString();
-    this.memory.set(addrStr, hexInstruction);
-  }
-  
-  fetchInstruction(address: number): number {
-    this.checkAddress(address, 4);
-    this.checkAlignment(address, 4);
-    
-    const addrStr = address.toString();
-    const hexInstruction = this.memory.get(addrStr);
-    
-    if (hexInstruction) {
-      return HexInstruction.decode(hexInstruction);
-    }
-    
-    return 0; // NOP instruction
-  }
-  
-  private checkAddress(address: number, size: number): void {
-    if (address >= 0xffff0000) return;
-    if (address + size > this.MEMORY_SIZE) {
-      throw new Error(`Memory access out of bounds: 0x${address.toString(16)}`);
-    }
-  }
-  
-  private checkAlignment(address: number, alignment: number): void {
-    if (address % alignment !== 0) {
-      throw new Error(`Unaligned memory access at 0x${address.toString(16)}`);
-    }
-  }
-  
-  // Convert memory map to object for JSON serialization
-  toObject(): { [address: string]: string } {
-    const obj: { [address: string]: string } = {};
-    for (const [key, value] of this.memory.entries()) {
-      obj[key] = value;
-    }
-    return obj;
-  }
-  
-  // Load memory from object (for JSON deserialization)
-  fromObject(obj: { [address: string]: string }): void {
-    this.memory.clear();
-    for (const [key, value] of Object.entries(obj)) {
-      this.memory.set(key, value);
-    }
-  }
-  
-  // Query memory with detailed formatting
-  queryMemory(startAddr: number, length: number, format: string = 'hex'): MemoryEntry[] {
-    const entries: MemoryEntry[] = [];
-    
-    for (let i = 0; i < length; i += 16) { // 128-bit word alignment
-      const addr = startAddr + i;
-      const addrStr = addr.toString();
-      const value = this.memory.get(addrStr);
-      
-      if (value) {
-        const bigintValue = Int128.fromString(value);
-        let formattedValue: string;
-        let isInstruction = false;
-        let decodedInstruction: string | undefined;
-        
-        // Check if this looks like an instruction (hex encoded)
-        if (HexInstruction.isInstruction(value)) {
-          isInstruction = true;
-          const instruction = HexInstruction.decode(value);
-          decodedInstruction = `0x${instruction.toString(16).padStart(8, '0')}`;
-        }
-        
-        switch (format) {
-          case 'hex':
-            formattedValue = Int128.toString(bigintValue);
-            break;
-          case 'decimal':
-            formattedValue = Int128.toDecimal(bigintValue);
-            break;
-          case 'binary':
-            formattedValue = Int128.toBinary(bigintValue);
-            break;
-          default:
-            formattedValue = Int128.toString(bigintValue);
-        }
-        
-        entries.push({
-          address: `0x${addr.toString(16).padStart(8, '0')}`,
-          value: formattedValue,
-          format: format,
-          is_instruction: isInstruction,
-          decoded_instruction: decodedInstruction
-        });
-      }
-    }
-    
-    return entries;
-  }
-  
-  dump(start: number, length: number): { [address: string]: string } {
-    const result: { [address: string]: string } = {};
-    for (let i = 0; i < length; i += 16) {
-      const addr = start + i;
-      const addrStr = addr.toString();
-      const value = this.memory.get(addrStr) || Int128.toString(BigInt(0));
-      result[addrStr] = value;
-    }
-    return result;
-  }
-  
-  // Clear all memory
-  clear(): void {
-    this.memory.clear();
-  }
-}
+// Memory moved to src/emulator/memory.ts
 
 // ============================================================================
 // Instruction Classes - MIPS32 Compatible
@@ -669,8 +518,13 @@ export class Darcy128CPU {
   private instructionsExecuted: number = 0;
   private executionMode: 'mips32' | 'darcy128' = 'mips32'; // Default to MIPS32 compatibility
   
-  constructor() {
-    this.memory = new Darcy128Memory();
+  constructor(memory?: Darcy128Memory) {
+    this.memory = memory ?? new Darcy128Memory(32 * 1024);
+  }
+  
+  // Allow wiring an external memory instance if desired
+  setMemory(memory: Darcy128Memory): void {
+    this.memory = memory;
   }
   
   reset(): void {
@@ -739,6 +593,21 @@ export class Darcy128CPU {
     instr.execute(this);
     this.instructionsExecuted++;
   }
+
+  // Convenience: execute a single instruction provided as a hex string (e.g., "0x00221820")
+  executeInstructionHex(hexString: string): void {
+    const word = HexInstruction.decode(hexString);
+    this.executeInstruction(word);
+  }
+
+  // Generic execute that accepts either a hex string or a numeric word
+  execute(instruction: string | number): void {
+    if (typeof instruction === 'string') {
+      this.executeInstructionHex(instruction);
+    } else {
+      this.executeInstruction(instruction);
+    }
+  }
   
   private decodeInstruction(word: number): Instruction {
     const opcode = (word >> 26) & 0x3F;
@@ -780,7 +649,13 @@ export class Darcy128CPU {
       this.executionHistory.shift();
     }
   }
-  
+  setState(state: Darcy128CPUState): void {
+    this.registers = state.registers.map(reg => Int128.fromString(reg.value));
+    this.pc = Int128.fromString(state.pc);
+    this.hi = Int128.fromString(state.hi);
+    this.lo = Int128.fromString(state.lo);
+    this.running = state.running;
+  }
   getState(): Darcy128CPUState {
     const registers: Darcy128Register[] = [];
     for (let i = 0; i < 32; i++) {
@@ -797,7 +672,7 @@ export class Darcy128CPU {
       hi: Int128.toString(this.hi),
       lo: Int128.toString(this.lo),
       running: this.running,
-      memory: this.memory.toObject(),
+      memory: this.memory,
       execution_mode: this.executionMode
     };
   }
@@ -828,7 +703,7 @@ export class Darcy128CPU {
     this.lo = Int128.fromString(state.lo);
     
     // Load memory
-    this.memory.fromObject(state.memory);
+    this.memory = state.memory;
     
     // Load execution mode
     this.executionMode = state.execution_mode;

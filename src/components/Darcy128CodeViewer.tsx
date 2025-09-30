@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './navbar/Navbar';
-import { Darcy128CPU, HexInstruction } from '../emulator/Darcy128CPU';
-import { Darcy128StateService } from '../services/Darcy128StateService';
+import { useCPU } from '@emulator/CPUContext';
 
 interface CompiledInstruction {
   id: string;
@@ -13,40 +12,35 @@ interface CompiledInstruction {
 }
 
 export default function Darcy128CodeViewer() {
-  const [cpu] = useState(() => new Darcy128CPU());
-  const [stateService] = useState(() => new Darcy128StateService());
+  const cpu = useCPU();
   const [cpuState, setCpuState] = useState<any>(null);
   const [compiledCode, setCompiledCode] = useState<CompiledInstruction[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [currentLine, setCurrentLine] = useState(-1);
   const [executionHistory, setExecutionHistory] = useState<string[]>([]);
+  const [codeCols, setCodeCols] = useState<number>(1);
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        const state = await stateService.loadState();
-        if (state?.cpuState) {
-          cpu.setState(state.cpuState);
-          setCpuState(state.cpuState);
-        } else {
-          setCpuState(cpu.getState());
-        }
-      } catch {
-        setCpuState(cpu.getState());
-      }
+    // Initialize CPU state fresh each load (no persistence)
+    setCpuState(cpu.getState());
+  }, []);
+
+  // Responsive columns: max 4, min 1
+  useEffect(() => {
+    const computeCols = () => {
+      const w = window.innerWidth;
+      if (w < 700) return 1;
+      if (w < 1000) return 2;
+      if (w < 1300) return 3;
+      return 4; // max 4
     };
-    init();
+    const apply = () => setCodeCols(computeCols());
+    apply();
+    window.addEventListener('resize', apply);
+    return () => window.removeEventListener('resize', apply);
   }, []);
 
-  useEffect(() => {
-    const sample: CompiledInstruction[] = [
-      { id: '1', type: 'lis', params: { rd: '1', immediate: '100' }, hexCode: '0x00000814', assembly: 'lis $1, 100', lineNumber: 1 },
-      { id: '2', type: 'lis', params: { rd: '2', immediate: '200' }, hexCode: '0x00001014', assembly: 'lis $2, 200', lineNumber: 2 },
-      { id: '3', type: 'add', params: { rd: '3', rs: '1', rt: '2' }, hexCode: '0x00221820', assembly: 'add $3, $1, $2', lineNumber: 3 },
-      { id: '4', type: 'jr', params: { rs: '0' }, hexCode: '0x00000008', assembly: 'jr $0', lineNumber: 4 }
-    ];
-    setCompiledCode(sample);
-  }, []);
+  // No persistence: keep program in RAM only
 
   const addToHistory = (m: string) => setExecutionHistory(prev => [...prev, m]);
 
@@ -61,12 +55,11 @@ export default function Darcy128CodeViewer() {
     setCurrentLine(idx);
     addToHistory(`Executing line ${idx + 1}: ${inst.assembly}`);
     try {
-      const hexInstruction = new HexInstruction(inst.hexCode);
-      cpu.executeInstruction(hexInstruction);
+      cpu.executeInstructionHex(inst.hexCode);
       const newState = cpu.getState();
       setCpuState(newState);
       addToHistory('Instruction executed successfully');
-      await stateService.saveState(newState, executionHistory, {});
+      // Do not persist CPU state
     } catch (e) {
       addToHistory(`Error: ${e}`);
     }
@@ -89,7 +82,7 @@ export default function Darcy128CodeViewer() {
     setCurrentLine(-1);
     setExecutionHistory([]);
     addToHistory('Program reset');
-    try { await stateService.saveState(s, [], {}); } catch {}
+    // Do not persist CPU state on reset; program persists via compiledCode effect
   };
 
   return (
@@ -104,17 +97,17 @@ export default function Darcy128CodeViewer() {
 
           <div style={{ display: 'flex', gap: '20px', height: 'calc(100vh - 220px)' }}>
             {/* Code Panel */}
-            <div style={{ flex: 1, backgroundColor: '#1a1a1a', borderRadius: '10px', border: '2px solid #00ffff', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ flex: 1, minWidth: 0, backgroundColor: '#1a1a1a', borderRadius: '10px', border: '2px solid #00ffff', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
               <div style={{ padding: '16px', borderBottom: '1px solid #333', backgroundColor: '#0a0a0a' }}>
                 <h3 style={{ color: '#00ffff', margin: 0 }}>Compiled Assembly Code</h3>
               </div>
-              <div style={{ padding: '16px', flex: 1, overflowY: 'auto' }}>
-                <div style={{ fontFamily: 'monospace', fontSize: '14px' }}>
+              <div style={{ padding: '16px', flex: 1, overflowY: 'auto', minWidth: 0 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${codeCols}, minmax(0, 1fr))`, gap: '10px', fontFamily: 'monospace', fontSize: '14px', minWidth: 0 }}>
                   {compiledCode.map((instruction, index) => (
-                    <div key={instruction.id} style={{ padding: '10px', marginBottom: '6px', backgroundColor: currentLine === index ? '#ff4444' : 'rgba(0,0,0,0.3)', borderRadius: '5px', border: currentLine === index ? '2px solid #ff0000' : '1px solid #333', color: currentLine === index ? '#fff' : '#ccc' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div key={instruction.id} style={{ padding: '10px', backgroundColor: currentLine === index ? '#ff4444' : 'rgba(0,0,0,0.3)', borderRadius: '5px', border: currentLine === index ? '2px solid #ff0000' : '1px solid #333', color: currentLine === index ? '#fff' : '#ccc', wordBreak: 'break-all', overflowWrap: 'anywhere', minWidth: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', minWidth: 0 }}>
                         <span style={{ color: '#888', fontSize: '12px' }}>Line {instruction.lineNumber}:</span>
-                        <span style={{ color: '#00ff00', fontSize: '12px' }}>{instruction.hexCode}</span>
+                        <span style={{ color: '#00ff00', fontSize: '12px', fontFamily: 'monospace', wordBreak: 'break-all', overflowWrap: 'anywhere' }}>{instruction.hexCode}</span>
                       </div>
                       <div style={{ marginTop: '4px', fontSize: '16px' }}>{instruction.assembly}</div>
                     </div>

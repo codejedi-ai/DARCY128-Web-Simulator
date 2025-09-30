@@ -5,18 +5,11 @@
 // ============================================================================
 // Types and Interfaces
 // ============================================================================
-
+// import the Darcy128CPUState from the emulator
+import { Darcy128CPUState } from '@emulator/Darcy128CPU';
 export interface SaveStateRequest {
   session_id: string;
-  cpu_state: {
-    registers: Array<{ name: string; value: string; type: string }>;
-    pc: string;
-    hi: string;
-    lo: string;
-    running: boolean;
-    memory: { [address: string]: string };
-    execution_mode: 'mips32' | 'darcy128';
-  };
+  cpu_state: Darcy128CPUState;
   execution_history: string[];
   performance_metrics: {
     instructions_executed: number;
@@ -28,34 +21,12 @@ export interface SaveStateRequest {
 
 export interface LoadStateResponse {
   success: boolean;
-  cpu_state?: {
-    registers: Array<{ name: string; value: string; type: string }>;
-    pc: string;
-    hi: string;
-    lo: string;
-    running: boolean;
-    memory: { [address: string]: string };
-    execution_mode: 'mips32' | 'darcy128';
-  };
-  execution_history?: string[];
-  performance_metrics?: {
-    instructions_executed: number;
-    simd_utilization: number;
-    crypto_acceleration: number;
-    memory_bandwidth: number;
-  };
-  message: string;
-  session_id: string;
-  timestamp: string;
-  error?: string;
+  cpu_state?: Darcy128CPUState;
 }
 
 export interface SaveStateResponse {
   success: boolean;
-  message: string;
-  session_id: string;
-  timestamp: string;
-  error?: string;
+  cpu_state?: Darcy128CPUState;
 }
 
 // ============================================================================
