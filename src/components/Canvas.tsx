@@ -116,7 +116,7 @@ export default function Canvas({ screenWidth }: CanvasProps) {
     // Set canvas size to match container (with small margin)
     const updateCanvasSize = () => {
       canvas.width = window.innerWidth - 4;
-      canvas.height = window.innerHeight - (screenWidth < 768 ? 60 : 70);
+      canvas.height = window.innerHeight - 4;
     };
     
     updateCanvasSize();
@@ -540,13 +540,14 @@ export default function Canvas({ screenWidth }: CanvasProps) {
   return (
     <div style={{ 
       position: "fixed",
-      top: screenWidth < 768 ? "60px" : "70px",
+      top: 0,
       left: 0,
       width: "100vw",
-      height: `calc(100vh - ${screenWidth < 768 ? "60px" : "70px"})`,
+      height: "100vh",
       overflow: "hidden",
       background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)',
-      display: "flex"
+      display: "flex",
+      zIndex: 1
     }}>
       {/* Collapsible Sidebar with Canvas Controls */}
       <div style={{

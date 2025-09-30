@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Navbar from './navbar/Navbar';
 import { Darcy128CPU, HexInstruction, Int128 } from '../emulator/Darcy128CPU';
 import { Darcy128StateService } from '../services/Darcy128StateService';
 
@@ -595,23 +596,30 @@ const Darcy128TestSuite: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#0a0a0a', color: '#ffffff', overflowY: 'auto' }}>
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="flex items-center justify-between mb-6">
+      <Navbar />
+      <div style={{ paddingTop: '80px', padding: '20px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">DARCY128 Test Suite</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 style={{ color: '#00ffff', fontSize: '32px', margin: 0 }}>DARCY128 Test Suite</h1>
+            <p style={{ color: '#cccccc', marginTop: '10px' }}>
               Comprehensive browser-based tests for base 16 (hex) instructions, map-based memory, and MIPS32 compatibility
             </p>
           </div>
           <button
             onClick={runAllTests}
             disabled={isRunning}
-            className={`px-6 py-3 rounded-lg font-semibold ${
-              isRunning
-                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: isRunning ? '#666' : '#0066ff',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: isRunning ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold',
+              fontSize: '16px',
+              transition: 'all 0.2s ease'
+            }}
           >
             {isRunning ? '🔄 Running Tests...' : '🚀 Run All Tests'}
           </button>

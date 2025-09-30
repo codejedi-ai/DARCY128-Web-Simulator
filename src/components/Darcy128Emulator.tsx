@@ -17,6 +17,14 @@ interface InstructionBlock {
   isExecuting?: boolean;
 }
 
+interface CommandTemplate {
+  type: string;
+  name: string;
+  params: string[];
+  description: string;
+  hexCode: string;
+}
+
 export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [cpu, setCpu] = useState<Darcy128CPU | null>(null);
@@ -32,6 +40,9 @@ export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps)
   const [terminalHeight, setTerminalHeight] = useState(200);
   const [currentInstructionIndex, setCurrentInstructionIndex] = useState(-1);
   const [instructionBlocks, setInstructionBlocks] = useState<InstructionBlock[]>([]);
+  const [showCommandBuilder, setShowCommandBuilder] = useState(false);
+  const [selectedCommand, setSelectedCommand] = useState<CommandTemplate | null>(null);
+  const [commandParams, setCommandParams] = useState<{ [key: string]: string }>({});
   const [stateService] = useState(() => new Darcy128StateService());
 
   // Initialize CPU
@@ -63,6 +74,21 @@ export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps)
 
     initializeCPU();
   }, [stateService]);
+
+  // Command templates for interactive building
+  const commandTemplates: CommandTemplate[] = [
+    { type: 'add', name: 'ADD', params: ['rd', 'rs', 'rt'], description: 'Add two registers', hexCode: '0x00221820' },
+    { type: 'sub', name: 'SUB', params: ['rd', 'rs', 'rt'], description: 'Subtract two registers', hexCode: '0x00221822' },
+    { type: 'mult', name: 'MULT', params: ['rs', 'rt'], description: 'Multiply two registers', hexCode: '0x00220018' },
+    { type: 'div', name: 'DIV', params: ['rs', 'rt'], description: 'Divide two registers', hexCode: '0x0022001A' },
+    { type: 'lw', name: 'LW', params: ['rt', 'rs', 'offset'], description: 'Load word from memory', hexCode: '0x8C220000' },
+    { type: 'sw', name: 'SW', params: ['rt', 'rs', 'offset'], description: 'Store word to memory', hexCode: '0xAC220000' },
+    { type: 'beq', name: 'BEQ', params: ['rs', 'rt', 'offset'], description: 'Branch if equal', hexCode: '0x10220004' },
+    { type: 'bne', name: 'BNE', params: ['rs', 'rt', 'offset'], description: 'Branch if not equal', hexCode: '0x14220004' },
+    { type: 'lis', name: 'LIS', params: ['rd', 'immediate'], description: 'Load immediate value', hexCode: '0x00000814' },
+    { type: 'jr', name: 'JR', params: ['rs'], description: 'Jump to register', hexCode: '0x00000008' },
+    { type: 'jalr', name: 'JALR', params: ['rs'], description: 'Jump and link register', hexCode: '0x00000009' }
+  ];
 
   // Initialize sample program as visual blocks
   const initializeSampleProgram = () => {
@@ -109,6 +135,33 @@ export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps)
       }
     ];
     setInstructionBlocks(sampleBlocks);
+  };
+
+  // Add new instruction block
+  const addInstructionBlock = () => {
+    if (!selectedCommand) return;
+
+    const newBlock: InstructionBlock = {
+      id: `block-${Date.now()}`,
+      type: selectedCommand.type as any,
+      x: 50 + (instructionBlocks.length % 3) * 250,
+      y: 50 + Math.floor(instructionBlocks.length / 3) * 80,
+      params: commandParams,
+      hexCode: selectedCommand.hexCode
+    };
+
+    setInstructionBlocks(prev => [...prev, newBlock]);
+    setShowCommandBuilder(false);
+    setSelectedCommand(null);
+    setCommandParams({});
+    addToTerminal(`Added ${selectedCommand.name} instruction`);
+  };
+
+  // Open command builder
+  const openCommandBuilder = (command: CommandTemplate) => {
+    setSelectedCommand(command);
+    setCommandParams({});
+    setShowCommandBuilder(true);
   };
 
   // Auto-save state periodically
@@ -573,8 +626,36 @@ export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps)
               />
             </div>
             
-            {/* Register Panel */}
+            {/* Command Builder Panel */}
             <div style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Command Builder */}
+              <div style={{ backgroundColor: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '2px solid #00ff00' }}>
+                <h3 style={{ color: '#00ff00', marginTop: 0 }}>Command Builder</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
+                  {commandTemplates.map((command, index) => (
+                    <button
+                      key={index}
+                      onClick={() => openCommandBuilder(command)}
+                      style={{
+                        padding: '10px',
+                        backgroundColor: '#0066ff',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      {command.name}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ marginTop: '10px', fontSize: '12px', color: '#888' }}>
+                  Click a command to add it to your program
+                </div>
+              </div>
+
               {/* Register Editor */}
               <div style={{ backgroundColor: '#1a1a1a', padding: '20px', borderRadius: '10px', border: '2px solid #00ff00' }}>
                 <h3 style={{ color: '#00ff00', marginTop: 0 }}>Registers</h3>
@@ -691,8 +772,98 @@ export default function Darcy128Emulator({ screenWidth }: Darcy128EmulatorProps)
         </div>
       </div>
 
-      {/* Register Editor Modal */}
-      {showRegisterEditor && (
+        {/* Command Builder Modal */}
+        {showCommandBuilder && selectedCommand && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}>
+            <div style={{
+              backgroundColor: '#1a1a1a',
+              padding: '30px',
+              borderRadius: '10px',
+              border: '2px solid #00ff00',
+              minWidth: '500px'
+            }}>
+              <h3 style={{ color: '#00ff00', marginTop: 0 }}>
+                Add {selectedCommand.name} Instruction
+              </h3>
+              <p style={{ color: '#ccc', marginBottom: '20px' }}>
+                {selectedCommand.description}
+              </p>
+              
+              <div style={{ marginBottom: '20px' }}>
+                {selectedCommand.params.map((param, index) => (
+                  <div key={index} style={{ marginBottom: '15px' }}>
+                    <label style={{ display: 'block', marginBottom: '5px', color: '#ccc' }}>
+                      {param.toUpperCase()}:
+                    </label>
+                    <input
+                      type="text"
+                      value={commandParams[param] || ''}
+                      onChange={(e) => setCommandParams(prev => ({ ...prev, [param]: e.target.value }))}
+                      placeholder={`Enter ${param}`}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        backgroundColor: '#333',
+                        color: '#fff',
+                        border: '1px solid #555',
+                        borderRadius: '5px',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+              
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => {
+                    setShowCommandBuilder(false);
+                    setSelectedCommand(null);
+                    setCommandParams({});
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#666',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={addInstructionBlock}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#00ff00',
+                    color: '#000',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Add Instruction
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Register Editor Modal */}
+        {showRegisterEditor && (
         <div style={{
           position: 'fixed',
           top: 0,
