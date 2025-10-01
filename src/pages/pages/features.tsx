@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/navbar/Navbar';
-import { Darcy128CPU, HexInstruction, Int128 } from '../../emulator/Darcy128CPU';
-import { Darcy128StateService } from '../../services/Darcy128StateService';
+import { MIPS32CPU } from '../../emulator/MIPS32CPU';
+import { MIPS32StateService } from '../../services/MIPS32StateService';
 import styles from '../styles/features.module.css';
 
 // ============================================================================

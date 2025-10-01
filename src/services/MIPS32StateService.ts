@@ -33,7 +33,7 @@ export interface SaveStateResponse {
 // State Service Class
 // ============================================================================
 
-export class Darcy128StateService {
+export class MIPS32StateService {
   private baseUrl: string;
   private sessionId: string;
 

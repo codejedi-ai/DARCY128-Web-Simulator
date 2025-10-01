@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'preact/hooks';
 import App from './App';
 import FeaturesPage from './pages/pages/features';
-import Darcy128CodeViewer from './components/Darcy128CodeViewer';
+import MIPS32CodeViewer from './components/MIPS32CodeViewer';
 import RegisterView from './components/RegisterView';
+import HexProgramInput from './components/HexProgramInput';
 
 export default function Router() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -26,14 +27,19 @@ export default function Router() {
     return <App onNavigate={navigate} />;
   }
 
-  // Route to MIPS instruction stepping (uses Darcy128CodeViewer)
+  // Route to MIPS instruction stepping (uses MIPS32CodeViewer)
   if (currentPath === '/step' || currentPath === '/mips-step') {
-    return <Darcy128CodeViewer />;
+    return <MIPS32CodeViewer />;
   }
 
   // Route to Register View
   if (currentPath === '/registers' || currentPath === '/register-view') {
     return <RegisterView />;
+  }
+
+  // Route to Hex Program Input
+  if (currentPath === '/hex' || currentPath === '/hex-input') {
+    return <HexProgramInput />;
   }
 
   // Home -> Features (now hosts test suite)

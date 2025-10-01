@@ -27,6 +27,7 @@ const Navbar = ({ screenWidth }: NavbarProps = {}) => {
     { path: '/demo', label: 'Canvas' },
     { path: '/step', label: 'MIPS Step' },
     { path: '/registers', label: 'Registers' },
+    { path: '/hex', label: 'Hex Input' },
   ];
 
   return (

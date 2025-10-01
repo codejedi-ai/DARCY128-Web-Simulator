@@ -5,7 +5,6 @@ import { Event } from "../types/Event";
 import { PageEntity as Paper } from "../types/PageEntity";
 import { PageEntityFactory } from "../types/PageEntityFactory";
 // Instruction programming (Scratch-style)
-import { workerManager } from "../utils/workerManager";
 import { deletionManager } from "../utils/deletionManager";
 
 interface CanvasProps {

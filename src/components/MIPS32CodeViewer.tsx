@@ -11,7 +11,7 @@ interface CompiledInstruction {
   lineNumber: number;
 }
 
-export default function Darcy128CodeViewer() {
+export default function MIPS32CodeViewer() {
   const cpu = useCPU();
   const [cpuState, setCpuState] = useState<any>(null);
   const [compiledCode, setCompiledCode] = useState<CompiledInstruction[]>([]);
