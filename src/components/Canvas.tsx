@@ -18,43 +18,6 @@ export default function Canvas({ screenWidth }: CanvasProps) {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [activeEvent, setActiveEvent] = useState<Event | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  // Scratch-style instruction programming state
-  interface InstructionBlock {
-    id: string;
-    type: 'add' | 'sub' | 'mult' | 'multu' | 'div' | 'divu' | 'mfhi' | 'mflo' | 'slt' | 'sltu' | 'lw' | 'sw' | 'beq' | 'bne' | 'lis' | 'jr' | 'jalr';
-    x: number;
-    y: number;
-    params: { [key: string]: string };
-  }
-  interface CommandTemplate {
-    type: InstructionBlock['type'];
-    name: string;
-    params: string[];
-    description: string;
-  }
-  const commandTemplates: CommandTemplate[] = [
-    { type: 'add', name: 'ADD', params: ['rd', 'rs', 'rt'], description: 'Add two registers' },
-    { type: 'sub', name: 'SUB', params: ['rd', 'rs', 'rt'], description: 'Subtract two registers' },
-    { type: 'mult', name: 'MULT', params: ['rs', 'rt'], description: 'Multiply (signed) stores HI:LO' },
-    { type: 'multu', name: 'MULTU', params: ['rs', 'rt'], description: 'Multiply (unsigned) stores HI:LO' },
-    { type: 'div', name: 'DIV', params: ['rs', 'rt'], description: 'Divide (signed) LO=quot HI=rem' },
-    { type: 'divu', name: 'DIVU', params: ['rs', 'rt'], description: 'Divide (unsigned) LO=quot HI=rem' },
-    { type: 'mfhi', name: 'MFHI', params: ['rd'], description: 'Move from HI to rd' },
-    { type: 'mflo', name: 'MFLO', params: ['rd'], description: 'Move from LO to rd' },
-    { type: 'slt', name: 'SLT', params: ['rd', 'rs', 'rt'], description: 'Set rd=1 if rs<rt (signed)' },
-    { type: 'sltu', name: 'SLTU', params: ['rd', 'rs', 'rt'], description: 'Set rd=1 if rs<rt (unsigned)' },
-    { type: 'lw', name: 'LW', params: ['rt', 'rs', 'offset'], description: 'Load word' },
-    { type: 'sw', name: 'SW', params: ['rt', 'rs', 'offset'], description: 'Store word' },
-    { type: 'beq', name: 'BEQ', params: ['rs', 'rt', 'offset'], description: 'Branch if equal' },
-    { type: 'bne', name: 'BNE', params: ['rs', 'rt', 'offset'], description: 'Branch if not equal' },
-    { type: 'lis', name: 'LIS', params: ['rd', 'immediate'], description: 'Load immediate' },
-    { type: 'jr', name: 'JR', params: ['rs'], description: 'Jump register' },
-    { type: 'jalr', name: 'JALR', params: ['rs'], description: 'Jump and link register' }
-  ];
-  const [instructionBlocks, setInstructionBlocks] = useState<InstructionBlock[]>([]);
-  const [showInstructionBuilder, setShowInstructionBuilder] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<CommandTemplate | null>(null);
-  const [builderParams, setBuilderParams] = useState<{ [key: string]: string }>({});
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [scale, setScale] = useState(1);
@@ -74,7 +37,6 @@ export default function Canvas({ screenWidth }: CanvasProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [deletionStatus, setDeletionStatus] = useState<{ status: string; queueSize: number } | null>(null);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Load events from worker
   useEffect(() => {
@@ -599,162 +561,30 @@ export default function Canvas({ screenWidth }: CanvasProps) {
   };
 
   return (
-    <div style={{ 
+    <div style={{
       position: "fixed",
       top: 0,
       left: 0,
       width: "100vw",
       height: "100vh",
       overflow: "hidden",
-      background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)',
+      background: '#202020',
       display: "flex",
       zIndex: 1
     }}>
-      {/* Collapsible Sidebar with Instruction Builder */}
-      <div style={{
-        width: isSidebarCollapsed ? "60px" : "250px",
-        background: "rgba(0, 0, 0, 0.8)",
-        backdropFilter: "blur(10px)",
-        borderRight: "1px solid rgba(255, 255, 255, 0.1)",
-        padding: isSidebarCollapsed ? "20px 10px" : "20px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "15px",
-        transition: "width 0.3s ease, padding 0.3s ease",
-        overflow: "hidden"
-      }}>
-        {/* Collapse Toggle Button */}
-        <button
-          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          style={{
-            width: "40px",
-            height: "40px",
-            background: "rgba(0, 255, 255, 0.2)",
-            border: "1px solid rgba(0, 255, 255, 0.5)",
-            borderRadius: "6px",
-            color: "#00ffff",
-            cursor: "pointer",
-            fontSize: "16px",
-            fontWeight: "bold",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "all 0.2s ease",
-            alignSelf: "flex-start"
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(0, 255, 255, 0.3)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(0, 255, 255, 0.2)";
-          }}
-        >
-          {isSidebarCollapsed ? "▶" : "◀"}
-        </button>
-
-        {!isSidebarCollapsed && (
-          <>
-            <h3 style={{ color: "#00ffff", margin: "0 0 10px 0", fontSize: "18px", fontWeight: "bold" }}>
-              Visual Programmer
-            </h3>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              {commandTemplates.map((cmd, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => { setSelectedTemplate(cmd); setBuilderParams({}); setShowInstructionBuilder(true); }}
-                  style={{
-                    padding: '10px',
-                    background: 'rgba(0, 102, 255, 0.9)',
-                    border: '1px solid rgba(0, 255, 255, 0.5)',
-                    borderRadius: '6px',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  {cmd.name}
-                </button>
-              ))}
-            </div>
-            
-            <button
-              onClick={() => setIsDeleteMode(!isDeleteMode)}
-              style={{
-                padding: '12px 16px',
-                background: isDeleteMode ? 'rgba(255, 0, 0, 0.9)' : 'rgba(100, 100, 100, 0.9)',
-                border: 'none',
-                borderRadius: '6px',
-                color: 'white',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = isDeleteMode ? 'rgba(255, 0, 0, 1)' : 'rgba(100, 100, 100, 1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = isDeleteMode ? 'rgba(255, 0, 0, 0.9)' : 'rgba(100, 100, 100, 0.9)';
-              }}
-            >
-              {isDeleteMode ? 'Exit Delete Mode' : 'Delete Mode'}
-            </button>
-
-            {/* Canvas Info */}
-            <div style={{
-              marginTop: "20px",
-              padding: "15px",
-              background: "rgba(255, 255, 255, 0.05)",
-              borderRadius: "6px",
-              border: "1px solid rgba(255, 255, 255, 0.1)"
-            }}>
-              <h4 style={{ color: "#00ffff", margin: "0 0 10px 0", fontSize: "14px" }}>
-                Canvas Info
-              </h4>
-              <div style={{ color: "#ccc", fontSize: "12px", lineHeight: "1.4" }}>
-                <div>Papers: {papers.length}</div>
-                <div>Scale: {scale.toFixed(2)}x</div>
-                <div>Position: ({panOffset.x.toFixed(0)}, {panOffset.y.toFixed(0)})</div>
-              </div>
-            </div>
-
-            {/* Tips */}
-            <div style={{
-              marginTop: "10px",
-              padding: "15px",
-              background: "rgba(255, 255, 255, 0.05)",
-              borderRadius: "6px",
-              border: "1px solid rgba(255, 255, 255, 0.1)"
-            }}>
-              <h4 style={{ color: "#00ffff", margin: "0 0 10px 0", fontSize: "14px" }}>How to Use</h4>
-              <div style={{ color: "#ccc", fontSize: "11px", lineHeight: "1.4" }}>
-                <div>• Click a command to add an instruction block</div>
-                <div>• Drag blocks around the canvas</div>
-                <div>• Mouse wheel to zoom</div>
-                <div>• Click + drag to pan</div>
-                <div>• Two fingers to zoom/pan on mobile</div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Canvas Area */}
-      <div style={{ flex: 1, position: "relative" }}>
+      {/* Canvas Area - Full Width */}
+      <div style={{ flex: 1, position: "relative", width: "100%", height: "100%" }}>
         <canvas
           ref={canvasRef}
-          width={window.innerWidth - (isSidebarCollapsed ? 64 : 254)}
-          height={window.innerHeight - (screenWidth < 768 ? 60 : 70)}
+          width={window.innerWidth}
+          height={window.innerHeight - 70}
           style={{
             display: "block",
-            width: "calc(100% - 4px)",
-            height: "calc(100% - 4px)",
-            margin: "2px",
+            width: "100%",
+            height: "calc(100vh - 70px)",
             cursor: (isDraggingPaper || isPanning) ? "grabbing" : (isHoveringPaper ? "grab" : "default"),
-            touchAction: "none"
+            touchAction: "none",
+            background: '#202020'
           }}
         />
       </div>

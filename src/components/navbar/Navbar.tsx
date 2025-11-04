@@ -24,26 +24,22 @@ const Navbar = ({ screenWidth }: NavbarProps = {}) => {
   }, []);
   
   const navItems = [
-    { path: '/demo', label: 'Canvas' },
-    { path: '/step', label: 'MIPS Step' },
-    { path: '/registers', label: 'Registers' },
-    { path: '/hex', label: 'Hex Input' },
+    { path: '/', label: 'Canvas' },
   ];
 
   return (
     <header 
       style={{
-        position: "fixed", 
+        position: "fixed",
         top: 0,
         left: 0,
         width: "100%",
-        background: "rgba(0, 0, 0, 0.9)",
-        backdropFilter: "blur(10px)",
+        background: "#353535",
         color: "white",
         padding: "15px 0",
         zIndex: 1000,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-        borderBottom: "1px solid rgba(255, 255, 255, 0.1)"
+        boxShadow: "0 2px 4px rgba(0,0,0,0.5)",
+        borderBottom: "1px solid #2a2a2a"
       }}
     >
       <div style={{ 
@@ -65,12 +61,13 @@ const Navbar = ({ screenWidth }: NavbarProps = {}) => {
           flexShrink: 0,
           cursor: "pointer"
         }} onClick={() => navigate('/')}>
-          <div style={{ 
-            fontSize: "24px",
-            fontWeight: "bold",
-            color: "#00ffff"
+          <div style={{
+            fontSize: "20px",
+            fontWeight: "600",
+            color: "#ddd",
+            letterSpacing: "0.5px"
           }}>
-            DARCY128
+            Curious UI
           </div>
         </div>
         
@@ -86,27 +83,27 @@ const Navbar = ({ screenWidth }: NavbarProps = {}) => {
               key={item.path}
               onClick={() => navigate(item.path)}
               style={{
-                background: currentPath === item.path ? "rgba(0, 255, 255, 0.2)" : "transparent",
-                border: currentPath === item.path ? "1px solid rgba(0, 255, 255, 0.5)" : "1px solid transparent",
-                color: currentPath === item.path ? "#00ffff" : "white",
+                background: currentPath === item.path ? "#525252" : "transparent",
+                border: "none",
+                color: currentPath === item.path ? "#fff" : "#aaa",
                 padding: "8px 16px",
-                borderRadius: "6px",
+                borderRadius: "4px",
                 cursor: "pointer",
                 fontSize: "14px",
-                fontWeight: currentPath === item.path ? "600" : "400",
-                transition: "all 0.2s ease",
+                fontWeight: "400",
+                transition: "all 0.15s ease",
                 textDecoration: "none"
               }}
               onMouseEnter={(e) => {
                 if (currentPath !== item.path) {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+                  e.currentTarget.style.background = "#454545";
+                  e.currentTarget.style.color = "#fff";
                 }
               }}
               onMouseLeave={(e) => {
                 if (currentPath !== item.path) {
                   e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.borderColor = "transparent";
+                  e.currentTarget.style.color = "#aaa";
                 }
               }}
             >
